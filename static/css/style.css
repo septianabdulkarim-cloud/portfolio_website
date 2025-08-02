@@ -51,6 +51,17 @@ img {
   text-decoration: none;
 }
 
+/* Tombol hamburger */
+.navbar-toggle {
+  display: none;
+  font-size: 1.8rem;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+/* Menu navigasi */
 .navbar-nav {
   list-style: none;
   display: flex;
@@ -201,14 +212,24 @@ section {
 @media (max-width: 768px) {
   .navbar .container {
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
+  }
+
+  .navbar-toggle {
+    display: block;
   }
 
   .navbar-nav {
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
+    width: 100%;
+    display: none;
     gap: 1rem;
     margin-top: 1rem;
+  }
+
+  .navbar-nav.active {
+    display: flex;
   }
 
   .hero h1 {

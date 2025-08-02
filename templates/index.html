@@ -136,7 +136,14 @@
 <nav class="navbar">
   <div class="container">
     <div class="navbar-brand">JASWEB DEV</div>
-    <ul class="navbar-nav">
+
+    <!-- Hamburger Menu Button -->
+    <button class="navbar-toggle" id="navbar-toggle">
+      ☰
+    </button>
+
+    <!-- Nav Menu -->
+    <ul class="navbar-nav" id="navbar-menu">
       <li><a class="nav-link" href="#hero">Home</a></li>
       <li><a class="nav-link" href="#about">About</a></li>
       <li><a class="nav-link" href="#services">Services</a></li>
@@ -360,6 +367,16 @@
     testimonialContainer.appendChild(card);
     event.target.reset();
   });
+  document.addEventListener("DOMContentLoaded", function () {
+    const toggleBtn = document.getElementById("navbar-toggle");
+    const navMenu = document.querySelector(".navbar-nav");
+
+    toggleBtn.addEventListener("click", () => {
+      navMenu.classList.toggle("active");
+    });
+  });
+
+
 </script>
 
 </body>
