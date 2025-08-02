@@ -2,162 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>SeptianDev | Portfolio</title>
+  <title>JasDev | Portfolio</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> 
   <link rel="stylesheet" href="/static/css/style.css">
-  <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      scroll-behavior: smooth;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      height: 100%;
-    }
-
-    .navbar {
-      background-color: #fff;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
-
-    .container {
-      width: 90%;
-      max-width: 1200px;
-      margin: auto;
-      padding: 20px 0;
-    }
-
-    .navbar-brand {
-      font-weight: bold;
-      font-size: 1.5rem;
-    }
-
-    .navbar-nav {
-      display: flex;
-      list-style: none;
-      gap: 15px;
-    }
-
-    .nav-link {
-      text-decoration: none;
-      color: #333;
-      font-weight: 500;
-    }
-
-    .hero h1 {
-      font-size: 2.5rem;
-      margin-bottom: 10px;
-    }
-
-    .btn {
-      background-color: #007BFF;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: bold;
-      display: inline-block;
-    }
-
-    .btn-outline {
-      background-color: transparent;
-      border: 2px solid #007BFF;
-      color: #007BFF;
-    }
-
-    .project-card {
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      padding: 20px;
-      margin: 15px;
-      flex: 1;
-      max-width: 300px;
-    }
-
-    .project-card img {
-      width: 100%;
-      border-radius: 8px;
-      margin-bottom: 10px;
-    }
-
-    .row {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
-    }
-
-    section {
-      padding: 60px 20px;
-    }
-
-    .text-center {
-      text-align: center;
-    }
-
-    form input, form textarea {
-      width: 90%;
-      max-width: 500px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      margin-bottom: 10px;
-    }
-
-    .whatsapp-float {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #25D366;
-      color: white;
-      padding: 10px 15px;
-      border-radius: 50px;
-      text-decoration: none;
-      font-weight: bold;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      z-index: 999;
-    }
-
-    .footer {
-      background: #f8f8f8;
-      text-align: center;
-      padding: 20px;
-      font-size: 14px;
-    }
-  </style>
 </head>
 <body>
 
 <!-- Navbar -->
 <nav class="navbar">
   <div class="container">
-    <div class="navbar-brand">JASWEB DEV</div>
+    <div class="navbar-brand">JasDev</div>
 
     <!-- Hamburger Menu Button -->
     <button class="navbar-toggle" id="navbar-toggle">
       ☰
     </button>
+  <!-- Nav Menu -->
+<ul class="navbar-nav" id="navbar-menu">
+  <li><a class="nav-link" href="#hero"><span class="material-icons">home</span> Home</a></li>
+  <li><a class="nav-link" href="#about"><span class="material-icons">person</span> About</a></li>
+  <li><a class="nav-link" href="#services"><span class="material-icons">build</span> Services</a></li>
+  <li><a class="nav-link" href="#projects"><span class="material-icons">work</span> Projects</a></li>
+  <li><a class="nav-link" href="#skills"><span class="material-icons">star</span> Skills</a></li>
+  <li><a class="nav-link" href="#contact"><span class="material-icons">email</span> Contact</a></li>
+</ul>
 
-    <!-- Nav Menu -->
-    <ul class="navbar-nav" id="navbar-menu">
-      <li><a class="nav-link" href="#hero">Home</a></li>
-      <li><a class="nav-link" href="#about">About</a></li>
-      <li><a class="nav-link" href="#services">Services</a></li>
-      <li><a class="nav-link" href="#projects">Projects</a></li>
-      <li><a class="nav-link" href="#skills">Skills</a></li>
-      <li><a class="nav-link" href="#contact">Contact</a></li>
-    </ul>
+   
+
   </div>
 </nav>
 
 <!-- Hero -->
 <section id="hero" class="hero" style="background: url('https://source.unsplash.com/1600x900/?technology,developer') center/cover no-repeat;">
   <div class="container text-center" style="color: white; text-shadow: 1px 1px 4px rgba(0,0,0,0.7); padding: 120px 0;">
-    <h1>Hi, I'm Septian Abdulkarim</h1>
+    <h1>Hi, I'm Abdul Karim</h1>
     <p>Python Developer | AI Enthusiast | Web Creator</p>
     <a href="#projects" class="btn">Lihat Karyaku</a>
   </div>
