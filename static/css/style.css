@@ -361,7 +361,7 @@ section {
 /* HP (3 kolom, baris terakhir 2 item) */
 @media (max-width: 767px) {
   .tools ul {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .tools li {
@@ -374,13 +374,6 @@ section {
   }
 }
 
-/* Supaya benar-benar mepet dengan sisi layar */
-body {
-  margin: 0;
-  padding: 0;
-  background-color: #f9f9f9;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
 
 * {
   box-sizing: border-box;
