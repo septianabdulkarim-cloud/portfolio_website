@@ -30,7 +30,7 @@ img {
 .navbar {
   background-color: #3216d3;
   padding: 1rem 0;
-  color: rgb(39, 32, 32);
+  color: rgb(255, 255, 255);
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -57,7 +57,7 @@ img {
   font-size: 1.8rem;
   background: none;
   border: none;
-  color: rgb(22, 21, 21);
+  color: rgb(0, 0, 0);
   cursor: pointer;
 }
 
@@ -72,7 +72,7 @@ img {
 }
 
 .nav-link {
-  color: rgb(44, 37, 37);
+  color: rgb(252, 252, 252);
   text-decoration: none;
   font-weight: 500;
   transition: color 0.3s ease;
@@ -108,7 +108,7 @@ img {
 .hero-content {
   position: relative;
   z-index: 2;
-  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
+  text-shadow: 1px 1px 4px rgba(255, 255, 255, 0.7);
 }
 
 .hero h1 {
@@ -361,7 +361,7 @@ section {
 /* HP (3 kolom, baris terakhir 2 item) */
 @media (max-width: 767px) {
   .tools ul {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2,0fr);
   }
 
   .tools li {
