@@ -40,6 +40,7 @@
   </div>
 </section>
 
+
 <section id="hero" class="hero">
   <div class="hero-slideshow">
     <div class="slide" style="background-image: url('/static/image/OIP\ 9.jpg');"></div>
@@ -263,22 +264,26 @@
   </div>
 </section>
 
-<!-- Contact -->
+<!-- Promo dengan efek ketik -->
+<section class="bg-danger text-white text-center py-3">
+  <div class="container">
+    <h5 class="typing-text"></h5>
+  </div>
+</section>
+
+   <!-- Contact -->
 <section class="bg-light" id="contact">
   <div class="container text-center">
     <h2>Contact Me</h2>
     <p class="mt-2">Kirimkan pertanyaan atau project Anda langsung dari form di bawah ini!</p>
 
-    <!-- Tombol toggle form -->
-    <button id="toggleFormBtn" class="btn">Hubungi Saya</button>
-
-    <!-- Form disembunyikan default -->
-    <div id="formContainer" style="display: none; margin-top: 20px;">
-      <form id="testimonialForm">
+    <!-- Form langsung terlihat tanpa toggle -->
+    <div id="formContainer" style="margin-top: 20px;">
+      <form id="testimonialForm" action="#testimoni">
         <input type="text" name="name" placeholder="Nama Anda" required><br>
         <input type="email" name="email" placeholder="Email Anda" required><br>
         <textarea name="message" placeholder="Pesan Anda" required></textarea><br>
-        <button type="submit" class="btn">Kirim Pesan</button>
+        <button type="submit" class="btn">Kirim Testimoni</button>
       </form>
     </div>
 
@@ -286,6 +291,7 @@
     <a href="mailto:septian@example.com" class="btn btn-outline">Atau Kirim Email</a>
   </div>
 </section>
+
 
 <!-- WhatsApp Floating Button -->
 <a href="https://wa.me/6287722898695" class="whatsapp-float" target="_blank">💬 Chat via WhatsApp</a>
@@ -406,6 +412,8 @@ const skillItems = document.querySelectorAll(".other-skills li");
       }
     });
   });
+
+
 </script>
 
 </body>
