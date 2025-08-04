@@ -15,7 +15,9 @@
 <!-- Navbar -->
 <nav class="navbar">
   <div class="container">
-     <div class="navbar-brand">JasWeb</div>
+    <a class="navbar-brand" href="/">
+  <img src="/static/image/6091307260287504134.jpg" alt="JasWeb Logo" style="height: 75px;">
+</a>
     <button class="navbar-toggle" id="navbar-toggle">☰</button>
     <ul class="navbar-nav" id="navbar-menu">
       <li><a class="nav-link" href="#hero"><span class="material-icons">home</span> Home</a></li>
@@ -29,10 +31,20 @@
 </nav>
 
 <!-- Hero Section -->
+ <!-- Section Iklan Berjalan -->
+<section class="marquee-container">
+  <div class="marquee">
+    <span>
+      🚀 Promo Web Portfolio Profesional Mulai dari 599-999K! ✨ | 💼 Terima Jasa Web UMKM, Toko Online,Web Perusahaan , Company Profile dan Cafe 🍽️ | 🎯 Chat Sekarang & Dapatkan Penawaran Spesial! 💬
+    </span>
+  </div>
+</section>
+
 <section id="hero" class="hero">
   <div class="hero-slideshow">
-    <div class="slide" style="background-image: url('/static/image/foto\ 1.jpg');"></div>
-    <div class="slide" style="background-image: url('https://tse4.mm.bing.net/th/id/OIP.Li73VLylkyodwU2A0geIFwHaEK?pid=Api&P=0&h=180');"></div>
+    <div class="slide" style="background-image: url('/static/image/OIP\ 9.jpg');"></div>
+    <div class="slide" style="background-image: url('/static/image/4635743.jpg');"></div>
+    <div class="slide" style="background-image: url('/static/image/wp6350578.webp');"></div>
 
   </div>
   <div class="hero-content">
@@ -145,7 +157,7 @@
     <h2>MY SERVICES</h2>
     <div class="row">
       <div class="card project-card">
-       <img src="/static/image/foto2.jpg" alt="AI Chatbot">
+       <img src="/static/image/saas.png" alt="AI Chatbot">
        <div class="card-body">
           <h5> Pengembangan Website Modern</h5>
           <p>Membangun website responsif dan menarik dengan desain yang clean serta teknologi terbaru, sesuai kebutuhan bisnis atau personal.</p>
@@ -256,12 +268,20 @@
   <div class="container text-center">
     <h2>Contact Me</h2>
     <p class="mt-2">Kirimkan pertanyaan atau project Anda langsung dari form di bawah ini!</p>
-    <form id="testimonialForm">
-      <input type="text" name="name" placeholder="Nama Anda" required><br>
-      <input type="email" name="email" placeholder="Email Anda" required><br>
-      <textarea name="message" placeholder="Pesan Anda" required></textarea><br>
-      <button type="submit" class="btn">Kirim Pesan</button>
-    </form>
+
+    <!-- Tombol toggle form -->
+    <button id="toggleFormBtn" class="btn">Hubungi Saya</button>
+
+    <!-- Form disembunyikan default -->
+    <div id="formContainer" style="display: none; margin-top: 20px;">
+      <form id="testimonialForm">
+        <input type="text" name="name" placeholder="Nama Anda" required><br>
+        <input type="email" name="email" placeholder="Email Anda" required><br>
+        <textarea name="message" placeholder="Pesan Anda" required></textarea><br>
+        <button type="submit" class="btn">Kirim Pesan</button>
+      </form>
+    </div>
+
     <br>
     <a href="mailto:septian@example.com" class="btn btn-outline">Atau Kirim Email</a>
   </div>
@@ -272,7 +292,7 @@
 
 <!-- Footer -->
 <footer class="footer">
-  &copy; 2025 Jasa Website. All rights reserved.
+  &copy; 2025 JasWebcom. All rights reserved.
 </footer>
 
 <script>
@@ -369,6 +389,23 @@ const skillItems = document.querySelectorAll(".other-skills li");
   // Mulai slideshow
   changeBackground(); // tampilkan pertama kali
   setInterval(changeBackground, 5000); // ganti setiap 5 detik
+
+
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const toggleBtn = document.getElementById('toggleFormBtn');
+    const formContainer = document.getElementById('formContainer');
+
+    toggleBtn.addEventListener('click', function () {
+      if (formContainer.style.display === 'none' || formContainer.style.display === '') {
+        formContainer.style.display = 'block';
+        toggleBtn.textContent = 'Tutup Formulir';
+      } else {
+        formContainer.style.display = 'none';
+        toggleBtn.textContent = 'Hubungi Saya';
+      }
+    });
+  });
 </script>
 
 </body>
