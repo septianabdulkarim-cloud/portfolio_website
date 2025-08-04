@@ -26,24 +26,44 @@ img {
   padding: 0 20px;
 }
 
-/* Navbar */
+/* === Reset dasar === */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* === Navbar utama === */
 .navbar {
-  background-color: #5e009c;
-  padding: 1rem 0;
-  color: rgb(49, 11, 139);
+  background-color: #1f4d99; /* Warna sama seperti logo */
+  padding: 0;
+  color: white;
   position: sticky;
   top: 0;
   z-index: 1000;
   width: 100%;
 }
 
+/* === Container flex navbar === */
 .navbar .container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
+  height: 75px; /* Samakan dengan tinggi logo */
+  padding: 0 20px;
 }
 
+/* === Logo === */
+.navbar img {
+  display: block;       /* Hindari inline space */
+  height: 100%;         /* Penuhi tinggi navbar */
+  max-height: 75px;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+/* === Brand teks (nama brand) === */
 .navbar-brand {
   font-weight: bold;
   font-size: 1.5rem;
@@ -51,17 +71,17 @@ img {
   text-decoration: none;
 }
 
-/* Tombol hamburger */
+/* === Tombol hamburger (jika ditambahkan nanti) === */
 .navbar-toggle {
   display: none;
   font-size: 1.8rem;
   background: none;
   border: none;
-  color: rgb(0, 0, 0);
+  color: white;
   cursor: pointer;
 }
 
-/* Menu navigasi */
+/* === Menu navigasi === */
 .navbar-nav {
   list-style: none;
   display: flex;
@@ -71,29 +91,53 @@ img {
   flex-wrap: wrap;
 }
 
+/* === Link menu === */
 .nav-link {
-  color: rgb(252, 252, 252);
+  display: flex;             /* Sejajarkan ikon dan teks */
+  align-items: center;
+  gap: 0.4rem;
+  color: rgb(250, 247, 247);
   text-decoration: none;
   font-weight: 500;
   transition: color 0.3s ease;
 }
 
 .nav-link:hover {
-  color: #00adb5;
-}
-/* Tambahan untuk ikon sejajar dengan teks */
-.nav-link {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem; /* jarak antara ikon dan teks */
+  color: #000000;
 }
 
+/* === Ikon Material (dalam link) === */
 .material-icons {
   font-size: 20px;
   line-height: 1;
   vertical-align: middle;
 }
 
+/* === Responsif Mobile === */
+@media (max-width: 768px) {
+  .navbar .container {
+    flex-wrap: nowrap;
+  }
+
+  .navbar-nav {
+    flex-direction: row;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .navbar-brand {
+    font-size: 1.2rem;
+  }
+
+  .navbar img {
+    max-height: 70px;
+  }
+}
+
+
+
+
+/*bagian hi */
 .hero {
   position: relative;
   height: 80vh;

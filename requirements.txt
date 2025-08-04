@@ -1,2 +1,6 @@
 Flask==2.3.3
 gunicorn
+Flask-Mail
+Flask-SQLAlchemy
+Flask-Login
+itsdangerous
