@@ -845,3 +845,50 @@ section {
     max-height: unset;
   }
 }
+
+
+
+
+.info-section {
+  background-color: #fff;
+  padding: 40px 20px;
+  margin: 20px auto;
+  max-width: 800px;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+}
+
+.info-section:hover {
+  transform: translateY(-4px);
+}
+
+.info-section h2 {
+  font-size: 24px;
+  color: #2a3f67;
+  margin-bottom: 15px;
+}
+
+.info-section ul,
+.info-section ol {
+  padding-left: 20px;
+}
+
+.info-section ul li,
+.info-section ol li {
+  margin-bottom: 10px;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+.info-section p {
+  font-size: 16px;
+  line-height: 1.8;
+  margin-top: 20px;
+  color: #555;
+}
+
+.info-section i {
+  color: #2a3f67;
+  margin-right: 10px;
+}

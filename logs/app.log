@@ -2223,3 +2223,96 @@
 2025-08-06 16:37:46,267 INFO: 127.0.0.1 - - [06/Aug/2025 16:37:46] "[36mGET /static/image/OIP%2037.jpg HTTP/1.1[0m" 304 -
 2025-08-06 16:37:46,284 INFO: 127.0.0.1 - - [06/Aug/2025 16:37:46] "[36mGET /static/image/OIP%2039.jpg HTTP/1.1[0m" 304 -
 2025-08-06 16:37:46,304 INFO: 127.0.0.1 - - [06/Aug/2025 16:37:46] "[36mGET /static/image/6091307260287504134.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:54:13,280 INFO: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-08-07 10:54:13,281 INFO: [33mPress CTRL+C to quit[0m
+2025-08-07 10:54:32,591 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:32] "GET / HTTP/1.1" 200 -
+2025-08-07 10:54:32,785 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:32] "[33mGET /foto2.jpg HTTP/1.1[0m" 404 -
+2025-08-07 10:54:33,548 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:33] "[36mGET /static/image/saas.png HTTP/1.1[0m" 304 -
+2025-08-07 10:54:33,552 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:33] "[36mGET /static/image/6086695479023880000.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:54:33,634 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:33] "[36mGET /static/image/6091307260287504134.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:54:33,769 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:33] "GET /static/css/style.css HTTP/1.1" 200 -
+2025-08-07 10:54:33,775 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:33] "[36mGET /static/image/OIP%2032.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:54:33,800 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:33] "[36mGET /static/image/OIP%2033.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:54:33,827 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:33] "[36mGET /static/image/Screenshot%202025-08-02%20170310.png HTTP/1.1[0m" 304 -
+2025-08-07 10:54:33,880 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:33] "[36mGET /static/image/OIP%2034.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:54:33,895 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:33] "[36mGET /static/6086695479023880012.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:54:33,908 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:33] "[36mGET /static/image/OIP%2035.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:54:33,921 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:33] "[36mGET /static/image/OIP%2036.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:54:33,923 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:33] "[36mGET /static/image/OIP%2037.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:54:33,951 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:33] "[36mGET /static/image/OIP%2039.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:54:33,958 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:33] "[36mGET /static/image/4635743.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:54:33,967 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:33] "[36mGET /static/image/OIP%2038.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:54:33,973 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:33] "[36mGET /static/image/wp6350578.webp HTTP/1.1[0m" 304 -
+2025-08-07 10:54:33,981 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:33] "[36mGET /static/image/OIP%209.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:54:34,237 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:34] "[36mGET /static/image/6091307260287504134.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:54:46,436 INFO: 127.0.0.1 - - [07/Aug/2025 10:54:46] "[36mGET /static/image/6091307260287504134.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:58:41,539 INFO: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-08-07 10:58:41,539 INFO: [33mPress CTRL+C to quit[0m
+2025-08-07 10:58:46,884 INFO: 127.0.0.1 - - [07/Aug/2025 10:58:46] "GET / HTTP/1.1" 200 -
+2025-08-07 10:58:47,046 INFO: 127.0.0.1 - - [07/Aug/2025 10:58:47] "[33mGET /foto2.jpg HTTP/1.1[0m" 404 -
+2025-08-07 10:58:47,225 INFO: 127.0.0.1 - - [07/Aug/2025 10:58:47] "[36mGET /static/image/6091307260287504134.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:58:47,326 INFO: 127.0.0.1 - - [07/Aug/2025 10:58:47] "GET /static/css/style.css HTTP/1.1" 200 -
+2025-08-07 10:58:47,536 INFO: 127.0.0.1 - - [07/Aug/2025 10:58:47] "[36mGET /static/image/Screenshot%202025-08-02%20170310.png HTTP/1.1[0m" 304 -
+2025-08-07 10:58:47,622 INFO: 127.0.0.1 - - [07/Aug/2025 10:58:47] "[36mGET /static/6086695479023880012.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:58:47,722 INFO: 127.0.0.1 - - [07/Aug/2025 10:58:47] "[36mGET /static/image/saas.png HTTP/1.1[0m" 304 -
+2025-08-07 10:58:47,781 INFO: 127.0.0.1 - - [07/Aug/2025 10:58:47] "[36mGET /static/image/OIP%2032.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:58:47,815 INFO: 127.0.0.1 - - [07/Aug/2025 10:58:47] "[36mGET /static/image/6086695479023880000.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:58:47,880 INFO: 127.0.0.1 - - [07/Aug/2025 10:58:47] "[36mGET /static/image/OIP%2033.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:58:47,897 INFO: 127.0.0.1 - - [07/Aug/2025 10:58:47] "[36mGET /static/image/wp6350578.webp HTTP/1.1[0m" 304 -
+2025-08-07 10:58:47,902 INFO: 127.0.0.1 - - [07/Aug/2025 10:58:47] "[36mGET /static/image/4635743.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:58:47,906 INFO: 127.0.0.1 - - [07/Aug/2025 10:58:47] "[36mGET /static/image/OIP%209.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:58:47,923 INFO: 127.0.0.1 - - [07/Aug/2025 10:58:47] "[36mGET /static/image/OIP%2036.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:58:47,930 INFO: 127.0.0.1 - - [07/Aug/2025 10:58:47] "[36mGET /static/image/OIP%2035.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:58:47,939 INFO: 127.0.0.1 - - [07/Aug/2025 10:58:47] "[36mGET /static/image/OIP%2034.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:58:47,940 INFO: 127.0.0.1 - - [07/Aug/2025 10:58:47] "[36mGET /static/image/OIP%2037.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:58:47,942 INFO: 127.0.0.1 - - [07/Aug/2025 10:58:47] "[36mGET /static/image/OIP%2038.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:58:47,957 INFO: 127.0.0.1 - - [07/Aug/2025 10:58:47] "[36mGET /static/image/OIP%2039.jpg HTTP/1.1[0m" 304 -
+2025-08-07 10:58:48,007 INFO: 127.0.0.1 - - [07/Aug/2025 10:58:48] "[36mGET /static/image/6091307260287504134.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:01:56,364 INFO: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-08-07 11:01:56,364 INFO: [33mPress CTRL+C to quit[0m
+2025-08-07 11:04:41,609 INFO: 127.0.0.1 - - [07/Aug/2025 11:04:41] "GET / HTTP/1.1" 200 -
+2025-08-07 11:04:41,716 INFO: 127.0.0.1 - - [07/Aug/2025 11:04:41] "[33mGET /foto2.jpg HTTP/1.1[0m" 404 -
+2025-08-07 11:04:41,867 INFO: 127.0.0.1 - - [07/Aug/2025 11:04:41] "[36mGET /static/image/6091307260287504134.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:04:41,960 INFO: 127.0.0.1 - - [07/Aug/2025 11:04:41] "[36mGET /static/image/Screenshot%202025-08-02%20170310.png HTTP/1.1[0m" 304 -
+2025-08-07 11:04:42,015 INFO: 127.0.0.1 - - [07/Aug/2025 11:04:42] "[36mGET /static/image/OIP%2032.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:04:42,042 INFO: 127.0.0.1 - - [07/Aug/2025 11:04:42] "[36mGET /static/image/saas.png HTTP/1.1[0m" 304 -
+2025-08-07 11:04:42,049 INFO: 127.0.0.1 - - [07/Aug/2025 11:04:42] "[36mGET /static/image/OIP%2033.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:04:42,067 INFO: 127.0.0.1 - - [07/Aug/2025 11:04:42] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-08-07 11:04:42,085 INFO: 127.0.0.1 - - [07/Aug/2025 11:04:42] "[36mGET /static/6086695479023880012.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:04:42,087 INFO: 127.0.0.1 - - [07/Aug/2025 11:04:42] "[36mGET /static/image/6086695479023880000.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:04:42,110 INFO: 127.0.0.1 - - [07/Aug/2025 11:04:42] "[36mGET /static/image/OIP%2035.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:04:42,114 INFO: 127.0.0.1 - - [07/Aug/2025 11:04:42] "[36mGET /static/image/OIP%2036.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:04:42,131 INFO: 127.0.0.1 - - [07/Aug/2025 11:04:42] "[36mGET /static/image/OIP%2037.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:04:42,152 INFO: 127.0.0.1 - - [07/Aug/2025 11:04:42] "[36mGET /static/image/OIP%2034.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:04:42,156 INFO: 127.0.0.1 - - [07/Aug/2025 11:04:42] "[36mGET /static/image/OIP%2039.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:04:42,158 INFO: 127.0.0.1 - - [07/Aug/2025 11:04:42] "[36mGET /static/image/OIP%2038.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:04:42,174 INFO: 127.0.0.1 - - [07/Aug/2025 11:04:42] "[36mGET /static/image/4635743.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:04:42,177 INFO: 127.0.0.1 - - [07/Aug/2025 11:04:42] "[36mGET /static/image/wp6350578.webp HTTP/1.1[0m" 304 -
+2025-08-07 11:04:42,189 INFO: 127.0.0.1 - - [07/Aug/2025 11:04:42] "[36mGET /static/image/OIP%209.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:04:42,318 INFO: 127.0.0.1 - - [07/Aug/2025 11:04:42] "[36mGET /static/image/6091307260287504134.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:05:33,368 INFO: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-08-07 11:05:33,368 INFO: [33mPress CTRL+C to quit[0m
+2025-08-07 11:05:40,548 INFO: 127.0.0.1 - - [07/Aug/2025 11:05:40] "GET / HTTP/1.1" 200 -
+2025-08-07 11:05:40,661 INFO: 127.0.0.1 - - [07/Aug/2025 11:05:40] "[33mGET /foto2.jpg HTTP/1.1[0m" 404 -
+2025-08-07 11:05:40,912 INFO: 127.0.0.1 - - [07/Aug/2025 11:05:40] "[36mGET /static/image/6091307260287504134.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:05:40,957 INFO: 127.0.0.1 - - [07/Aug/2025 11:05:40] "[36mGET /static/image/Screenshot%202025-08-02%20170310.png HTTP/1.1[0m" 304 -
+2025-08-07 11:05:40,969 INFO: 127.0.0.1 - - [07/Aug/2025 11:05:40] "[36mGET /static/image/6086695479023880000.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:05:40,979 INFO: 127.0.0.1 - - [07/Aug/2025 11:05:40] "[36mGET /static/6086695479023880012.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:05:41,000 INFO: 127.0.0.1 - - [07/Aug/2025 11:05:40] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-08-07 11:05:41,027 INFO: 127.0.0.1 - - [07/Aug/2025 11:05:41] "[36mGET /static/image/OIP%2032.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:05:41,041 INFO: 127.0.0.1 - - [07/Aug/2025 11:05:41] "[36mGET /static/image/OIP%2033.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:05:41,054 INFO: 127.0.0.1 - - [07/Aug/2025 11:05:41] "[36mGET /static/image/OIP%2034.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:05:41,072 INFO: 127.0.0.1 - - [07/Aug/2025 11:05:41] "[36mGET /static/image/OIP%2035.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:05:41,138 INFO: 127.0.0.1 - - [07/Aug/2025 11:05:41] "[36mGET /static/image/OIP%2036.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:05:41,178 INFO: 127.0.0.1 - - [07/Aug/2025 11:05:41] "[36mGET /static/image/OIP%209.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:05:41,186 INFO: 127.0.0.1 - - [07/Aug/2025 11:05:41] "[36mGET /static/image/OIP%2037.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:05:41,190 INFO: 127.0.0.1 - - [07/Aug/2025 11:05:41] "[36mGET /static/image/4635743.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:05:41,200 INFO: 127.0.0.1 - - [07/Aug/2025 11:05:41] "[36mGET /static/image/wp6350578.webp HTTP/1.1[0m" 304 -
+2025-08-07 11:05:41,214 INFO: 127.0.0.1 - - [07/Aug/2025 11:05:41] "[36mGET /static/image/OIP%2038.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:05:41,215 INFO: 127.0.0.1 - - [07/Aug/2025 11:05:41] "[36mGET /static/image/saas.png HTTP/1.1[0m" 304 -
+2025-08-07 11:05:41,232 INFO: 127.0.0.1 - - [07/Aug/2025 11:05:41] "[36mGET /static/image/OIP%2039.jpg HTTP/1.1[0m" 304 -
+2025-08-07 11:05:41,328 INFO: 127.0.0.1 - - [07/Aug/2025 11:05:41] "[36mGET /static/image/6091307260287504134.jpg HTTP/1.1[0m" 304 -
