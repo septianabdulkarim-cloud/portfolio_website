@@ -17,6 +17,7 @@ def init_db():
             email TEXT UNIQUE,
             token TEXT,
             is_verified INTEGER DEFAULT 0,
+            is_admin INTEGER DEFAULT 0,
             dashboard_url TEXT
         )
     ''')

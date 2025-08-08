@@ -7,9 +7,10 @@ from flask import send_from_directory
 from markupsafe import escape
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-
+from flask import flash, redirect, url_for
+from itsdangerous import SignatureExpired, BadSignature
 import os, uuid, logging
-
+import secrets
 
 
 
@@ -95,25 +96,39 @@ def register():
 @app.route('/verify/<token>')
 def verify_email(token):
     try:
-        email = s.loads(token, salt='email-confirm', max_age=3600)
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("UPDATE users SET is_verified = 1 WHERE email = ?", (email,))
-        conn.commit()
-        conn.close()
+        # Coba decode token
+        email = s.loads(token, salt='email-confirm', max_age=3600)  # 1 jam berlaku
+    except SignatureExpired:
+        flash('Link verifikasi sudah kadaluarsa.', 'danger')
+        return redirect(url_for('register'))
+    except BadSignature:
+        flash('Token verifikasi tidak valid.', 'danger')
+        return redirect(url_for('register'))
 
-        flash("Email berhasil diverifikasi! Silakan login.", "success")
-        logging.info(f"Email verified: {email}")
-    except Exception as e:
-        logging.error(f"Verifikasi gagal: {e}")
-        flash("Link tidak valid atau kedaluwarsa!", "danger")
+    # Update status verifikasi user di database
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users WHERE email = ?", (email,))
+    user = cur.fetchone()
+
+    if not user:
+        flash("User tidak ditemukan.", "danger")
+        return redirect(url_for('register'))
+
+    if user['verified'] == 1:
+        flash("Email Anda sudah diverifikasi sebelumnya.", "info")
+    else:
+        cur.execute("UPDATE users SET verified = 1 WHERE email = ?", (email,))
+        conn.commit()
+        flash("Email berhasil diverifikasi. Silakan login.", "success")
+
+    conn.close()
     return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 @limiter.limit("5 per minute", error_message="Terlalu banyak percobaan login. Coba lagi nanti.")
 def login():
     if request.method == 'POST':
-        # Escape input untuk hindari XSS
         email = escape(request.form['email'].strip().lower())
 
         if not email or '@' not in email:
@@ -122,49 +137,88 @@ def login():
 
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("SELECT token, is_verified FROM users WHERE email = ?", (email,))
+        cur.execute("SELECT token, is_verified, is_admin, dashboard_url FROM users WHERE email = ?", (email,))
         user = cur.fetchone()
         conn.close()
 
         if user:
-            token, verified = user
-            if verified:
-                session['email'] = email
-                flash("Login berhasil!", "success")
+            token_db, verified, is_admin, dashboard_url = user
 
-                # Cek apakah email adalah admin
-                if email in ADMIN_EMAILS:
-                    return redirect(url_for('admin_dashboard', token=token))
-                else:
-                    return redirect(url_for('client_dashboard', token=token))
-            else:
+            if not verified:
                 flash("Akun belum diverifikasi!", "warning")
+                return render_template("login.html")
+
+            # Simpan ke session
+            session['email'] = email
+            session['is_admin'] = bool(is_admin)
+
+            flash("Login berhasil!", "success")
+
+            # Buat token acak jika perlu (opsional, hanya untuk keamanan URL)
+            random_token = secrets.token_urlsafe(64 if is_admin else 16)
+
+            if is_admin:
+                return redirect(url_for('Admin_Dashboard', token=random_token))
+            else:
+                return redirect(url_for('client_dashboard', token=random_token, url=dashboard_url))
         else:
             flash("Email tidak ditemukan!", "danger")
 
     return render_template("login.html")
 
-
 @app.route('/dashboard/<token>')
 def client_dashboard(token):
+    # Pastikan user sudah login
+    if 'email' not in session:
+        flash("Anda harus login terlebih dahulu!", "danger")
+        return redirect(url_for('login'))
+
+    email_session = session['email']
+
+    # Cari token dan email dari database
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("SELECT email FROM users WHERE token = ?", (token,))
     user = cur.fetchone()
     conn.close()
 
-    if user and 'email' in session and session['email'] == user[0]:
-        return render_template("dashboard.html", email=user[0])
-    flash("Anda harus login terlebih dahulu!", "danger")
+    # Cocokkan email dari session dan database
+    if user and user[0] == email_session:
+        return render_template("dashboard.html", email=email_session, token=token)
+
+    flash("Akses tidak valid atau token salah!", "danger")
     return redirect(url_for('login'))
 
-@app.route('/admin')
-def admin():
-    return send_from_directory('admin_build', 'index.html')
+@app.route('/admin_dashboard/<token>')
+def admin_dashboard(token):
+    # 1. Cek apakah sudah login
+    if 'email' not in session:
+        flash("Anda harus login terlebih dahulu!", "danger")
+        return redirect(url_for('login'))
 
-@app.route('/admin/<path:path>')
-def admin_static(path):
-    return send_from_directory('admin_build', path)
+    # 2. Ambil email dari session
+    email_session = session['email']
+
+    # 3. Cek apakah email termasuk admin
+    if email_session not in ADMIN_EMAILS:
+        flash("Akses ditolak. Anda bukan admin!", "danger")
+        return redirect(url_for('login'))
+
+    # 4. Cek token di database
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT email FROM users WHERE token = ?", (token,))
+    user = cur.fetchone()
+    conn.close()
+
+    # 5. Cek apakah token cocok dengan email admin
+    if user and user[0] == email_session:
+        return render_template("Admin_Dashboard.html", email=email_session, token=token)
+
+    # 6. Kalau token salah
+    flash("Akses tidak valid atau token salah!", "danger")
+    return redirect(url_for('login'))
+
 
 @app.route('/logout')
 def logout():
