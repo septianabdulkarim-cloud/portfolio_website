@@ -120,3 +120,8 @@ body, html {
       padding: 20px;
       font-size: 14px;
     }
+
+
+
+
+     <a class="btn" href="{{ url_for('client_dashboard') }}">{{ session.get('email') }}</a>
