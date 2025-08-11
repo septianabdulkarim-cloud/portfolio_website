@@ -62,6 +62,12 @@ def allowed_file(filename):
 
 DATABASE_PATH = 'database.sqlite3'
 
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
+
 def get_db_connection():
     conn = sqlite3.connect(DATABASE_PATH)
     conn.row_factory = sqlite3.Row
@@ -90,6 +96,17 @@ def init_db():
         status TEXT DEFAULT 'pending',
         verified INTEGER DEFAULT 0,
         created_at TEXT DEFAULT (datetime('now'))
+    );
+    ''')
+    # Tambah tabel projects
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS projects (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_email TEXT NOT NULL,
+        project_name TEXT NOT NULL,
+        progress INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY(user_email) REFERENCES users_client(email)
     );
     ''')
     conn.commit()
@@ -323,13 +340,20 @@ def client_dashboard(dashboard_url):
     # Cek apakah dashboard_url ada di DB dan cocok dengan email session
     cur.execute("SELECT email FROM users_client WHERE dashboard_url = ?", (dashboard_url,))
     user = cur.fetchone()
-    conn.close()
 
     if not user or user['email'] != email_session:
+        conn.close()
         flash("Akses tidak valid!", "danger")
         return redirect(url_for('login'))
 
-    return render_template("dashboard.html", email=email_session)
+    # Ambil project + progress client ini
+    cur.execute("SELECT project_name, progress FROM projects WHERE user_email = ?", (email_session,))
+    projects = cur.fetchall()
+
+    conn.close()
+
+    return render_template("dashboard.html", email=email_session, projects=projects)
+
 
 @app.route('/admin_dashboard')
 @login_required(is_admin_required=True)
@@ -337,8 +361,10 @@ def admin_dashboard():
     email_session = session['email']
 
     conn = get_db_connection()
+    conn.row_factory = dict_factory  # <-- Set supaya fetchall menghasilkan dict
     cur = conn.cursor()
 
+    # Cek admin valid
     cur.execute("SELECT email FROM users_admin WHERE email = ?", (email_session,))
     user = cur.fetchone()
     if not user:
@@ -346,15 +372,24 @@ def admin_dashboard():
         flash("Akses tidak valid!", "danger")
         return redirect(url_for('login'))
 
+    # Ambil data clients
     cur.execute("SELECT id, email, created_at FROM users_client ORDER BY created_at DESC")
     clients = cur.fetchall()
 
     cur.execute("SELECT id, email, created_at FROM users_client WHERE status = 'pending' ORDER BY created_at DESC")
     new_clients = cur.fetchall()
 
+    # Ambil semua project dengan progressnya
+    cur.execute("""
+        SELECT p.id, p.user_email, p.project_name, p.progress
+        FROM projects p
+        ORDER BY p.user_email, p.project_name
+    """)
+    projects = cur.fetchall()
+
     conn.close()
 
-    return render_template("Admin_Dashboard.html", email=email_session, clients=clients, new_clients=new_clients)
+    return render_template("Admin_Dashboard.html", email=email_session, clients=clients, new_clients=new_clients, projects=projects)
 
 @app.route('/delete_client/<int:id>', methods=['POST'])
 @login_required(is_admin_required=True)
@@ -435,6 +470,33 @@ def upload_file():
             files_per_client[client['email']] = []
 
     return render_template('dashboard.html', clients=clients, files_per_client=files_per_client)
+
+
+@app.route('/update_project_progress', methods=['POST'])
+@login_required(is_admin_required=True)
+def update_project_progress():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Ambil semua key dari form yang berisi progress update
+    # Format inputnya: progress_<project_id>
+    for key, value in request.form.items():
+        if key.startswith('progress_'):
+            project_id = key.split('_')[1]
+            try:
+                progress_value = int(value)
+                if 0 <= progress_value <= 100:
+                    # Update progress di DB
+                    cur.execute("UPDATE projects SET progress = ? WHERE id = ?", (progress_value, project_id))
+            except ValueError:
+                # Abaikan jika bukan angka valid
+                pass
+
+    conn.commit()
+    conn.close()
+
+    flash("Progress project berhasil diperbarui.", "success")
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/logout')
 def logout():
