@@ -238,7 +238,6 @@
         font-size: 2rem;
       }
     }
-
   </style>
 </head>
 <body>
@@ -265,31 +264,25 @@
     </div>
   </div>
 
-  <script>
-    // Robot scale & rotate on click/touch handled by CSS :active
+  <!-- Audio beep robot -->
+  <audio id="robotSound" src="/static/sounds/luvvoice.com-20250811-v40Yk4.mp3" preload="auto"></audio>
 
-    // Pupil mengikuti kursor mouse
+  <script>
     const robot = document.getElementById('robot');
     const pupils = robot.querySelectorAll('.pupil');
+    const robotSound = document.getElementById('robotSound');
 
+    // Pupil mengikuti kursor mouse
     robot.addEventListener('mousemove', (e) => {
-      const rect = robot.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-
-      const maxMove = 6; // max pixels pupils move inside eye
-
+      const maxMove = 6;
       pupils.forEach(pupil => {
         const eyeRect = pupil.parentElement.getBoundingClientRect();
-
-        // Calculate vector from eye center to mouse
         const eyeCenterX = eyeRect.left + eyeRect.width / 2;
         const eyeCenterY = eyeRect.top + eyeRect.height / 2;
 
         let dx = e.clientX - eyeCenterX;
         let dy = e.clientY - eyeCenterY;
 
-        // Limit distance
         const dist = Math.sqrt(dx*dx + dy*dy);
         if(dist > maxMove) {
           dx = dx / dist * maxMove;
@@ -306,7 +299,12 @@
         pupil.style.transform = `translate(0, 0)`;
       });
     });
+
+    // Putar suara beep saat robot diklik
+    robot.addEventListener('click', () => {
+      robotSound.currentTime = 0;
+      robotSound.play();
+    });
   </script>
 </body>
 </html>
-
