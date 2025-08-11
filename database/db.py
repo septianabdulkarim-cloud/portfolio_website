@@ -1,25 +1,32 @@
 import sqlite3
-import os
-
-DB_PATH = os.path.join(os.path.dirname(__file__), 'database.db')
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect('database.db')
     conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
     conn = get_db_connection()
-    c = conn.cursor()
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT UNIQUE,
-            token TEXT,
-            is_verified INTEGER DEFAULT 0,
-            is_admin INTEGER DEFAULT 0,
-            dashboard_url TEXT
-        )
+    cur = conn.cursor()
+    # Tabel users_client
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS users_client (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE NOT NULL,
+        token TEXT NOT NULL,
+        dashboard_url TEXT NOT NULL,
+        verified INTEGER NOT NULL DEFAULT 0
+    )
+    ''')
+    # Tabel users_admin
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS users_admin (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE NOT NULL,
+        token TEXT NOT NULL,
+        dashboard_url TEXT NOT NULL,
+        verified INTEGER NOT NULL DEFAULT 0
+    )
     ''')
     conn.commit()
     conn.close()

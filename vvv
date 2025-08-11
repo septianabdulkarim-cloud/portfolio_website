@@ -305,27 +305,30 @@ def login():
             session.clear()
             session['email'] = email
             session['is_admin'] = False
-            # Jangan simpan dashboard_url di session, pakai URL langsung di redirect
-            return redirect(url_for('client_dashboard', dashboard_url=dashboard_url))
+            session['dashboard_url'] = dashboard_url
+            return redirect(url_for('client_dashboard'))
 
         flash("Email tidak ditemukan!", "danger")
 
     return render_template("login.html")
 
-@app.route('/dashboard/<dashboard_url>')
+@app.route('/dashboard')
 @login_required(is_admin_required=False)
-def client_dashboard(dashboard_url):
+def client_dashboard():
     email_session = session['email']
+    dashboard_url = session.get('dashboard_url')
+
+    if not dashboard_url:
+        flash("URL dashboard tidak ditemukan!", "danger")
+        return redirect(url_for('login'))
 
     conn = get_db_connection()
     cur = conn.cursor()
-
-    # Cek apakah dashboard_url ada di DB dan cocok dengan email session
-    cur.execute("SELECT email FROM users_client WHERE dashboard_url = ?", (dashboard_url,))
-    user = cur.fetchone()
+    cur.execute("SELECT dashboard_url FROM users_client WHERE email = ?", (email_session,))
+    result = cur.fetchone()
     conn.close()
 
-    if not user or user['email'] != email_session:
+    if not result or result['dashboard_url'] != dashboard_url:
         flash("Akses tidak valid!", "danger")
         return redirect(url_for('login'))
 
@@ -446,6 +449,4 @@ def logout():
 if __name__ == '__main__':
     # Jangan debug=True di production, gunakan HTTPS dan proxy jika perlu
     app.run(debug=False, use_reloader=False)
-
-
 

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <title>Admin Dashboard - {{ email }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            height: 100vh;
+            background-color: #f4f6fa;
+            color: #333;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 240px;
+            background: linear-gradient(180deg, #004aad, #00307a);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding-top: 20px;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+        }
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+            font-size: 20px;
+        }
+        .sidebar button {
+            background: none;
+            border: none;
+            color: white;
+            padding: 15px 20px;
+            text-align: left;
+            font-size: 15px;
+            cursor: pointer;
+            width: 100%;
+            border-left: 4px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+        .sidebar button:hover,
+        .sidebar button.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #00c6ff;
+        }
+
+        /* CONTENT AREA */
+        .content {
+            flex-grow: 1;
+            padding: 25px;
+            overflow-y: auto;
+        }
+        .content-header {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .content-header h1 {
+            font-size: 22px;
+            color: #004aad;
+        }
+
+        /* SECTIONS */
+        section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from {opacity: 0; transform: translateY(10px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+
+        /* UPLOAD FORM */
+        form.upload-form {
+            margin-top: 15px;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            max-width: 400px;
+        }
+        form.upload-form input[type="file"] {
+            display: block;
+            margin-bottom: 12px;
+        }
+        form.upload-form button {
+            background-color: #004aad;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+        form.upload-form button:hover {
+            background-color: #00307a;
+        }
+
+        /* FLASH MESSAGE */
+        .flash-message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .flash-message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .flash-message.danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        /* TABLE STYLE */
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .user-table th, .user-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        .user-table th {
+            background-color: #004aad;
+            color: white;
+        }
+        .user-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .user-table tr:hover {
+            background-color: #e6f0ff;
+        }
+        .btn-delete {
+            background-color: #dc3545;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .btn-delete:hover {
+            background-color: #b02a37;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <h2>Admin Panel</h2>
+        <button class="active" data-section="home" onclick="showSection('home')">🏠 Beranda</button>
+        <button data-section="upload" onclick="showSection('upload')">📂 Upload File</button>
+        <button data-section="clients" onclick="showSection('clients')">📋 Daftar Client</button>
+        <button data-section="incoming" onclick="showSection('incoming')">📥 Client Masuk</button>
+        <button data-section="settings" onclick="showSection('settings')">⚙️ Pengaturan</button>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content" id="content-area">
+
+        <div class="content-header">
+            <h1>Selamat datang, {{ email }}!</h1>
+        </div>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash-message {{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- HOME -->
+        <section id="section-home">
+            <p>Ini adalah halaman dashboard admin Anda.</p>
+        </section>
+
+        <form class="upload-form" action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+          <label for="client_id">Pilih Client:</label>
+          <select name="client_id" id="client_id" required>
+         {% for client in clients %}
+         <option value="{{ client.id }}">{{ client.email }}</option>
+         {% endfor %}
+         </select>
+        <input type="file" name="file" required />
+        <button type="submit">Upload</button>
+        </form>
+
+        <!-- CLIENT LIST -->
+        <section id="section-clients" style="display:none;">
+            <h2>Daftar Client</h2>
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Email</th>
+                        <th>Tanggal Daftar</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in clients %}
+                    <tr>
+                        <td>{{ client.id }}</td>
+                        <td>{{ client.email }}</td>
+                        <td>{{ client.tanggal_daftar }}</td>
+                        <td>
+                            <form action="{{ url_for('delete_client', id=client.id) }}" method="post" style="display:inline;">
+                                <button type="submit" class="btn-delete" onclick="return confirm('Yakin ingin hapus user ini?')">Hapus</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align:center;">Tidak ada data client</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <!-- INCOMING CLIENTS -->
+<section id="section-incoming" style="display:none;">
+    <h2>Client Masuk</h2>
+    <table class="user-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Email</th>
+                <th>Tanggal Daftar</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for client in incoming_clients %}
+            <tr>
+                <td>{{ client.id }}</td>
+                <td>{{ client.email }}</td>
+                <td>{{ client.tanggal_daftar }}</td>
+                <td>
+                    <form action="{{ url_for('approve_client', id=client.id) }}" method="post" style="display:inline;">
+                        <button type="submit" class="btn-delete" style="background-color:green;">Terima</button>
+                    </form>
+                    <form action="{{ url_for('delete_client', id=client.id) }}" method="post" style="display:inline;">
+                        <button type="submit" class="btn-delete">Hapus</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align:center;">Tidak ada client baru</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+
+        <!-- SETTINGS -->
+        <section id="section-settings" style="display:none;">
+            <h2>Pengaturan</h2>
+            <p>Kelola preferensi akun Anda di sini.</p>
+        </section>
+
+    </div>
+
+    <script>
+        function showSection(section) {
+            document.querySelectorAll('#content-area section').forEach(sec => sec.style.display = 'none');
+            const sel = document.getElementById(`section-${section}`);
+            if (sel) sel.style.display = 'block';
+
+            document.querySelectorAll('.sidebar button').forEach(btn => btn.classList.remove('active'));
+            const btn = Array.from(document.querySelectorAll('.sidebar button')).find(b => b.dataset.section === section);
+            if (btn) btn.classList.add('active');
+        }
+    </script>
+
+</body>
+</html>
+
