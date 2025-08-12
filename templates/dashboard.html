@@ -305,6 +305,90 @@
     form button:hover {
       background-color: #1e40af;
     }
+    @media (max-width: 768px) {
+  body {
+    flex-direction: column;
+    overflow: auto;
+    background: #f5f7fa;
+  }
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    padding: 1rem 0.75rem;
+    overflow-x: auto;
+    box-shadow: none;
+    border-radius: 0;
+
+    /* Tambahan supaya teks dan tombol center */
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  .sidebar h2 {
+    display: none;
+  }
+  .sidebar button {
+    flex: 1 0 auto;
+    text-align: center;
+    margin: 0 0.3rem;
+    border-left: none;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 0.9rem; /* diperkecil agar tidak terlalu besar */
+    justify-content: center;
+    font-weight: 700;
+    box-shadow: none;
+    transition: box-shadow 0.3s ease;
+  }
+  .sidebar button i {
+    font-size: 1.1rem;
+    margin-bottom: 2px;
+  }
+  .sidebar button.active,
+  .sidebar button:hover {
+    border-left: none;
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.6);
+    background-color: #2563eb;
+    color: #fff;
+  }
+  .content-wrapper {
+    padding: 1.5rem 1.75rem;
+    border-radius: 0;
+    box-shadow: none;
+    flex-grow: unset;
+    min-height: 60vh;
+
+    /* Tambahan untuk teks center */
+    text-align: center;
+  }
+  .content-wrapper h1 {
+    font-size: 1.8rem; /* diperkecil agar tidak terlalu besar */
+    user-select: none;
+  }
+  .content-wrapper p {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  .file-list {
+    max-width: 100%;
+    margin-top: 1.5rem;
+    padding-left: 0;
+
+    /* teks center */
+    text-align: center;
+  }
+  form {
+    max-width: 100%;
+    align-items: center; /* agar isi form center */
+  }
+  form label, form textarea, form button {
+    text-align: center;
+  }
+  form textarea {
+    width: 100%;
+  }
+}
+
   </style>
 </head>
 <body>

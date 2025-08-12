@@ -5,8 +5,12 @@
     <title>Admin Dashboard - {{ email }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
     <style>
-        /* ... CSS kamu sebelumnya ... */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* Reset & Base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             font-family: 'Poppins', sans-serif;
             display: flex;
@@ -202,14 +206,14 @@
     <!-- SIDEBAR -->
     <div class="sidebar">
         <h2>Admin Panel</h2>
-        <button class="active" data-section="home" onclick="showSection('home')">🏠 Beranda</button>
-        <button data-section="upload" onclick="showSection('upload')">📂 Upload File</button>
-        <button data-section="clients" onclick="showSection('clients')">📋 Daftar Client</button>
-        <button data-section="incoming" onclick="showSection('incoming')">📥 Client Masuk</button>
-        <button data-section="projects" onclick="showSection('projects')">📈 Project Clients</button>
+        <button class="active" data-section="section-home" onclick="showSection('section-home')">🏠 Beranda</button>
+        <button data-section="section-upload" onclick="showSection('section-upload')">📂 Upload File</button>
+        <button data-section="section-clients" onclick="showSection('section-clients')">📋 Daftar Client</button>
+        <button data-section="section-incoming" onclick="showSection('section-incoming')">📥 Client Masuk</button>
+        <button data-section="section-projects" onclick="showSection('section-projects')">📈 Project Clients</button>
         <button data-section="messages-section" onclick="showSection('messages-section')">📨 Pesan</button>
-        <button data-section="files" onclick="showSection('files')">📁 Files Uploaded</button>
-        <button data-section="settings" onclick="showSection('settings')">⚙️ Pengaturan</button>
+        <button data-section="section-files" onclick="showSection('section-files')">📁 Files Uploaded</button>
+        <button data-section="section-settings" onclick="showSection('section-settings')">⚙️ Pengaturan</button>
     </div>
 
     <!-- CONTENT -->
@@ -218,13 +222,6 @@
         <div class="content-header">
             <h1>Selamat datang, {{ email }}!</h1>
         </div>
-
-        <!-- FLASH MESSAGE -->
-        {% if flash_message %}
-        <div class="flash-message {{ flash_category }}">
-            {{ flash_message }}
-        </div>
-        {% endif %}
 
         <!-- HOME -->
         <section id="section-home" class="active">
@@ -236,7 +233,7 @@
             <form class="upload-form" action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
                 <label for="client_id">Pilih Client:</label>
                 <select name="client_id" id="client_id" required>
-                     <option value="" disabled selected>-- Pilih Client --</option>
+                    <option value="" disabled selected>-- Pilih Client --</option>
                     {% for client in clients %}
                     <option value="{{ client.id }}">{{ client.email }}</option>
                     {% endfor %}
@@ -244,8 +241,7 @@
 
                 <label for="project_name">Pilih Project:</label>
                 <select name="project_name" id="project_name" required>
-                     <option value="" disabled selected>-- Pilih Project --</option>
-                      
+                    <option value="" disabled selected>-- Pilih Project --</option>
                     {% for project in projects %}
                     <option value="{{ project.project_name }}">{{ project.project_name }} ({{ project.user_email }})</option>
                     {% endfor %}
@@ -423,26 +419,28 @@
     </div>
 
     <script>
-        function showSection(section) {
+        function showSection(sectionId) {
             // Hide all sections
             document.querySelectorAll('#content-area section').forEach(sec => sec.classList.remove('active'));
             // Show selected section
-            const selectedSection = document.getElementById(`section-${section}`);
+            const selectedSection = document.getElementById(sectionId);
             if (selectedSection) selectedSection.classList.add('active');
 
             // Update sidebar buttons active class
             document.querySelectorAll('.sidebar button').forEach(btn => btn.classList.remove('active'));
-            const activeBtn = Array.from(document.querySelectorAll('.sidebar button')).find(b => b.dataset.section === section);
+            const activeBtn = Array.from(document.querySelectorAll('.sidebar button')).find(b => b.dataset.section === sectionId);
             if (activeBtn) activeBtn.classList.add('active');
         }
 
-        // Optional: load default active section on page load if needed
+        // Load default active section on page load
         document.addEventListener('DOMContentLoaded', () => {
             const activeBtn = document.querySelector('.sidebar button.active');
             if (activeBtn) {
                 showSection(activeBtn.dataset.section);
             }
         });
+
+        // Optional: You had a renderMessages function but not integrated or called; you can remove or adapt if needed.
     </script>
 
 </body>
