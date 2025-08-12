@@ -20,6 +20,7 @@ from markupsafe import escape
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
+from flask import send_from_directory, abort
 
 # ----------------- Load env -----------------
 load_dotenv()
@@ -791,6 +792,19 @@ def send_client_message():
 
     flash('Pesan berhasil dikirim', 'success')
     return redirect(request.referrer or url_for('client_dashboard', dashboard_url=''))
+
+
+
+@app.route('/download/<path:filename>')
+@login_required(is_admin_required=False)
+def download_file(filename):
+    upload_folder = os.path.join(app.root_path, 'uploads')  # folder penyimpanan file
+    file_path = os.path.join(upload_folder, filename)
+
+    if not os.path.isfile(file_path):
+        abort(404)  # Kalau tidak ada, balikin error
+
+    return send_from_directory(upload_folder, filename, as_attachment=True)
 
 @app.route('/logout')
 def logout():

@@ -545,10 +545,10 @@ section {
 }
 
 /* Animation Delay */
-.other-skills li:nth-child(1) { animation-delay: 0.1s; }
-.other-skills li:nth-child(2) { animation-delay: 0.2s; }
-.other-skills li:nth-child(3) { animation-delay: 0.3s; }
-.other-skills li:nth-child(4) { animation-delay: 0.4s; }
+.other-skills li:nth-child(1) { animation-delay: 0.2s; }
+.other-skills li:nth-child(2) { animation-delay: 0.4s; }
+.other-skills li:nth-child(3) { animation-delay: 0.6s; }
+.other-skills li:nth-child(4) { animation-delay: 0.8s; }
 
 /* Scroll hidden state */
 .other-skills li.scroll-hidden {
@@ -937,3 +937,4 @@ section {
   background-color: rgba(255, 255, 255, 0.2);
   color: #fff;
 }
+

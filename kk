@@ -5,12 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dashboard Client - {{ email }}</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-        integrity="sha512-pOaXy+H9yrN+03U7aXLFoRgiBxZ+XQaZZQFnz+6VXq3FeSFiZVbLK3FmVy0b95d7/1zoGz8e+QQ0Rl6XMaY5xg=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    integrity="sha512-pOaXy+H9yrN+03U7aXLFoRgiBxZ+XQaZZQFnz+6VXq3FeSFiZVbLK3FmVy0b95d7/1zoGz8e+QQ0Rl6XMaY5xg=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
   <style>
-    /* === CSS bawaan tetap sama, tidak diubah besar-besaran === */
-    /* ... semua CSS kamu sebelumnya di sini ... */
     /* Reset dan style sama seperti sebelumnya */
     * {
       box-sizing: border-box;
@@ -308,30 +310,31 @@
   </style>
 </head>
 <body>
-  <!-- Sidebar -->
   <nav class="sidebar" role="navigation" aria-label="Sidebar navigation">
     <h2>Dashboard</h2>
-    <button class="active" data-section="profile" aria-current="page">
+    <button class="active" data-section="profile" aria-current="page" onclick="showContent('profile')">
       <i class="fa-solid fa-user"></i> Profil Saya
     </button>
-    <button data-section="messages">
+    <button data-section="messages" onclick="showContent('messages')">
       <i class="fa-solid fa-envelope"></i> Pesan
     </button>
-    <button data-section="projects">
-      <i class="fa-solid fa-diagram-project"></i> Project Anda
-    </button>
-    <button data-section="settings">
-      <i class="fa-solid fa-gear"></i> Form Testimoni
-    </button>
-    <button data-section="settings">
+    <button data-section="settings" onclick="showContent('settings')">
       <i class="fa-solid fa-gear"></i> Pengaturan
+    </button>
+    <button data-section="projects" onclick="showContent('projects')">
+      <i class="fa-solid fa-diagram-project"></i> Project Anda
     </button>
   </nav>
 
-  <!-- Konten -->
-  <main class="content-wrapper" id="content-area" tabindex="0" aria-live="polite"></main>
+  <main
+    class="content-wrapper"
+    id="content-area"
+    tabindex="0"
+    aria-live="polite"
+  >
+    <!-- Konten akan dirender oleh JS -->
+  </main>
 
-  <!-- Data dari backend -->
   <script type="application/json" id="data-json">
   {
     "projects": {{ projects|tojson|safe }},
@@ -343,25 +346,33 @@
   </script>
 
   <script>
-    // Ambil data
-    const data = JSON.parse(document.getElementById('data-json').textContent);
-    const { projects, email, clients, filesPerClient, filesPerProject } = data;
+    const dataJsonElement = document.getElementById('data-json');
+    const data = JSON.parse(dataJsonElement.textContent);
+
+    const projects = data.projects;
+    const email = data.email;
+    const clients = data.clients;
+    const filesPerClient = data.filesPerClient;
+    const filesPerProject = data.filesPerProject;
 
     const content = document.getElementById('content-area');
     const sidebarButtons = document.querySelectorAll('.sidebar button');
 
-    // === Render Profil ===
     function renderProfile() {
-      let html = `<h1>Profil Saya</h1>
-                  <p>Selamat datang, ${email}! Ini adalah halaman profil Anda.</p>
-                  <section>
-                    <div class="uploaded-files file-list">
-                      <h3>Daftar File yang Sudah Diunggah (Per Client)</h3>`;
+      let html = `
+        <h1>Profil Saya</h1>
+        <p>Selamat datang, ${email}! Ini adalah halaman profil Anda.</p>
 
-      if (clients && clients.length > 0) {
+        <section>
+          <div class="uploaded-files file-list">
+            <h3>Daftar File yang Sudah Diunggah (Per Client)</h3>
+      `;
+
+      if (clients.length > 0) {
         clients.forEach(client => {
           const clientId = String(client.id);
           html += `<div class="client-files"><h4>${client.email}</h4>`;
+
           if (filesPerClient[clientId] && filesPerClient[clientId].length > 0) {
             html += '<ul>';
             filesPerClient[clientId].forEach(filename => {
@@ -377,35 +388,44 @@
         html += `<p>Tidak ada client.</p>`;
       }
 
-      // Per Project
-      html += `</div>
-               <div class="uploaded-files file-list" style="margin-top: 2rem;">
-                 <h3>Daftar File yang Sudah Diunggah (Per Project)</h3>`;
+      html += `
+          </div>
+          <div class="uploaded-files file-list" style="margin-top: 2rem;">
+            <h3>Daftar File yang Sudah Diunggah (Per Project)</h3>
+      `;
 
-      if (filesPerProject && Object.keys(filesPerProject).length > 0) {
-        for (const [projectName, files] of Object.entries(filesPerProject)) {
-          html += `<div class="project-files"><h4>Project: ${projectName}</h4><ul>`;
-          files.forEach(file => {
-            const downloadUrl = `/download/${encodeURIComponent(file.filename)}`;
-            html += `<li>${file.filename} 
-                      <small>(diunggah: ${file.uploaded_at})</small> 
-                      - <a href="${downloadUrl}" download>Download</a></li>`;
-          });
-          html += '</ul></div>';
-        }
+      if (Object.keys(filesPerProject).length > 0) {
+          for (const [projectName, files] of Object.entries(filesPerProject)) {
+            html += `<div class="project-files"><h4>Project: ${projectName}</h4><ul>`;
+            files.forEach(file => {
+              const downloadUrl = `/download/${encodeURIComponent(file.filename)}`;
+              html += `
+              <li>
+                ${file.filename} 
+                <small>(diunggah: ${file.uploaded_at})</small> 
+                - <a href="${downloadUrl}" download>Download</a>
+              </li>
+            `;
+            });
+            html += '</ul></div>';
+          };
       } else {
         html += `<p>Tidak ada file yang diupload untuk project Anda.</p>`;
       }
 
-      html += `</div></section>`;
+      html += `
+          </div>
+        </section>
+      `;
+
       content.innerHTML = html;
     }
 
-    // === Render Pesan ===
     function renderMessages() {
       content.innerHTML = `
         <h1>Pesan</h1>
         <p>Ini adalah halaman pesan Anda. Belum ada pesan baru.</p>
+
         <form id="message-form" action="{{ url_for('send_client_message') }}" method="post">
           <label for="message">Kirim Pesan ke Admin:</label>
           <textarea name="message" id="message" rows="4" required></textarea>
@@ -413,82 +433,113 @@
         </form>
       `;
 
-      document.getElementById('message-form').addEventListener('submit', e => {
+      // Event listener submit form kirim pesan
+      const form = document.getElementById('message-form');
+      form.addEventListener('submit', e => {
         e.preventDefault();
-        const message = e.target.message.value.trim();
-        if (!message) return alert('Pesan tidak boleh kosong.');
-        fetch(e.target.action, {
+
+        const message = form.message.value.trim();
+        if (!message) {
+          alert('Pesan tidak boleh kosong.');
+          return;
+        }
+
+        // Contoh AJAX submit (fetch)
+        fetch(form.action, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message })
+          body: JSON.stringify({ message }),
         })
-        .then(res => {
-          if (res.ok) {
-            alert('Pesan berhasil dikirim!');
-            e.target.reset();
-          } else {
-            alert('Gagal mengirim pesan, coba lagi nanti.');
-          }
-        })
-        .catch(() => alert('Terjadi kesalahan jaringan.'));
+          .then(res => {
+            if (res.ok) {
+              alert('Pesan berhasil dikirim!');
+              form.reset();
+            } else {
+              alert('Gagal mengirim pesan, coba lagi nanti.');
+            }
+          })
+          .catch(() => alert('Terjadi kesalahan jaringan.'));
       });
     }
 
-    // === Render Pengaturan ===
     function renderSettings() {
-      content.innerHTML = `<h1>Pengaturan</h1>
-                           <p>Atur preferensi dan informasi akun Anda di sini.</p>`;
+      content.innerHTML = `
+        <h1>Pengaturan</h1>
+        <p>Atur preferensi dan informasi akun Anda di sini.</p>
+      `;
     }
 
-    // === Render Project ===
     function renderProjects() {
-      let html = `<h1>Project Anda</h1>
-                  <p>Berikut adalah status proyek yang sedang Anda kerjakan:</p>
-                  <div class="projects-list">`;
-      if (projects && projects.length > 0) {
+      let html = `
+        <h1>Project Anda</h1>
+        <p>Berikut adalah status proyek yang sedang Anda kerjakan:</p>
+        <div class="projects-list">
+      `;
+
+      if (projects.length > 0) {
         projects.forEach(project => {
-          html += `<div class="project-card">
-                     <h3>${project.project_name}</h3>
-                     <div class="progress-bar">
-                       <div class="progress" style="width: ${project.progress}%;"></div>
-                     </div>
-                     <p>Progress: ${project.progress}%</p>
-                   </div>`;
+          html += `
+            <div class="project-card">
+              <h3>${project.project_name}</h3>
+              <div class="progress-bar">
+                <div class="progress" style="width: ${project.progress}%;"></div>
+              </div>
+              <p>Progress: ${project.progress}%</p>
+            </div>
+          `;
         });
       } else {
         html += `<p>Anda belum memiliki project.</p>`;
       }
+
       html += `</div>`;
+
       content.innerHTML = html;
     }
 
-    // === Switch Konten ===
     function showContent(section) {
       sidebarButtons.forEach(btn => {
         btn.classList.remove('active');
         btn.removeAttribute('aria-current');
       });
-      const activeBtn = [...sidebarButtons].find(btn => btn.dataset.section === section);
+
+      const activeBtn = Array.from(sidebarButtons).find(btn => btn.dataset.section === section);
       if (activeBtn) {
         activeBtn.classList.add('active');
         activeBtn.setAttribute('aria-current', 'page');
       }
-      if (section === 'profile') renderProfile();
-      else if (section === 'messages') renderMessages();
-      else if (section === 'settings') renderSettings();
-      else if (section === 'projects') renderProjects();
+
+      switch (section) {
+        case 'profile':
+          renderProfile();
+          break;
+        case 'messages':
+          renderMessages();
+          break;
+        case 'settings':
+          renderSettings();
+          break;
+        case 'projects':
+          renderProjects();
+          break;
+        default:
+          renderProfile();
+      }
+
       content.focus();
     }
 
-    // === Event Sidebar ===
     sidebarButtons.forEach(btn => {
-      btn.addEventListener('click', () => showContent(btn.dataset.section));
+      btn.addEventListener('click', () => {
+        showContent(btn.dataset.section);
+      });
     });
 
-    // Load awal
     document.addEventListener('DOMContentLoaded', () => {
       showContent('profile');
     });
   </script>
 </body>
 </html>
+
+
