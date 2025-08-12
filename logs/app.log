@@ -3020,3 +3020,125 @@ sqlite3.OperationalError: no such column: is_admin
 2025-08-08 14:02:19,202 INFO: 127.0.0.1 - - [08/Aug/2025 14:02:19] "[36mGET /static/image/OIP%2038.jpg HTTP/1.1[0m" 304 -
 2025-08-08 14:02:19,208 INFO: 127.0.0.1 - - [08/Aug/2025 14:02:19] "[36mGET /static/image/OIP%2039.jpg HTTP/1.1[0m" 304 -
 2025-08-08 14:02:19,241 INFO: 127.0.0.1 - - [08/Aug/2025 14:02:19] "[36mGET /static/image/6091307260287504134.jpg HTTP/1.1[0m" 304 -
+2025-08-12 13:35:55,107 INFO [app_logger] Starting Flask app on 127.0.0.1:5000
+2025-08-12 13:36:48,472 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 13:36:48,568 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 13:40:17,023 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 13:42:08,695 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 13:56:13,597 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 13:59:48,664 INFO [app_logger] Email sent to ['septianabdulkarim@gmail.com']
+2025-08-12 14:00:15,603 ERROR [app_logger] Error loading messages: Expecting value: line 1 column 1 (char 0)
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\Downloads\portfolio_website\portfolio_website\app.py", line 170, in load_messages
+    return json.load(f)
+           ~~~~~~~~~^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\json\__init__.py", line 293, in load
+    return loads(fp.read(),
+        cls=cls, object_hook=object_hook,
+        parse_float=parse_float, parse_int=parse_int,
+        parse_constant=parse_constant, object_pairs_hook=object_pairs_hook, **kw)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\json\decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\json\decoder.py", line 363, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2025-08-12 14:04:16,967 ERROR [app_logger] Error loading messages: Expecting value: line 1 column 1 (char 0)
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\Downloads\portfolio_website\portfolio_website\app.py", line 170, in load_messages
+    with open(messages_file, 'r', encoding='utf-8') as f:
+               ^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\json\__init__.py", line 293, in load
+    return loads(fp.read(),
+        cls=cls, object_hook=object_hook,
+        parse_float=parse_float, parse_int=parse_int,
+        parse_constant=parse_constant, object_pairs_hook=object_pairs_hook, **kw)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\json\decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\json\decoder.py", line 363, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2025-08-12 14:09:27,044 ERROR [app_logger] Error loading messages: Expecting value: line 1 column 1 (char 0)
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\Downloads\portfolio_website\portfolio_website\app.py", line 170, in load_messages
+    session['_csrf_token'] = secrets.token_urlsafe(32)
+               ^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\json\__init__.py", line 293, in load
+    return loads(fp.read(),
+        cls=cls, object_hook=object_hook,
+        parse_float=parse_float, parse_int=parse_int,
+        parse_constant=parse_constant, object_pairs_hook=object_pairs_hook, **kw)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\json\decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\json\decoder.py", line 363, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2025-08-12 14:09:40,368 ERROR [app_logger] Error loading messages: Expecting value: line 1 column 1 (char 0)
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\Downloads\portfolio_website\portfolio_website\app.py", line 170, in load_messages
+    return []
+    
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\json\__init__.py", line 293, in load
+    return loads(fp.read(),
+        cls=cls, object_hook=object_hook,
+        parse_float=parse_float, parse_int=parse_int,
+        parse_constant=parse_constant, object_pairs_hook=object_pairs_hook, **kw)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\json\decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\json\decoder.py", line 363, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2025-08-12 14:11:52,238 ERROR [app_logger] Error loading messages: Expecting value: line 1 column 1 (char 0)
+Traceback (most recent call last):
+  File "C:\Users\LENOVO\Downloads\portfolio_website\portfolio_website\app.py", line 170, in load_messages
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\json\__init__.py", line 293, in load
+    return loads(fp.read(),
+        cls=cls, object_hook=object_hook,
+        parse_float=parse_float, parse_int=parse_int,
+        parse_constant=parse_constant, object_pairs_hook=object_pairs_hook, **kw)
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\json\decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\LENOVO\AppData\Local\Programs\Python\Python313\Lib\json\decoder.py", line 363, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2025-08-12 14:13:25,785 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 14:13:56,263 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 14:23:35,297 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 14:23:35,625 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 14:25:46,510 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 14:30:45,137 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 14:31:56,214 INFO [app_logger] Email sent to ['septianabdulkarim1@gmail.com']
+2025-08-12 14:35:54,008 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 14:37:43,592 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 14:41:41,249 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 14:46:18,522 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 14:48:22,511 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 14:51:47,149 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 14:58:54,427 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 15:02:05,604 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 15:08:40,034 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 15:13:37,411 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 15:19:35,191 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 15:26:35,756 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 15:27:47,451 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 15:31:53,221 INFO [app_logger] Received signal 2, exiting...
+2025-08-12 15:34:35,168 INFO [app_logger] Received signal 2, exiting...

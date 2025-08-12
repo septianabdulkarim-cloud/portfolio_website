@@ -5,8 +5,8 @@
     <title>Admin Dashboard - {{ email }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
     <style>
-        /* ... (pakai CSS yang sudah kamu kirim, tidak saya ulang ya) ... */
-         * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* ... CSS kamu sebelumnya ... */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Poppins', sans-serif;
             display: flex;
@@ -68,6 +68,24 @@
             font-size: 22px;
             color: #004aad;
         }
+        /* FLASH MESSAGE */
+        .flash-message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            max-width: 700px;
+        }
+        .flash-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .flash-message.danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
         /* SECTIONS */
         section {
             background: white;
@@ -108,21 +126,6 @@
         }
         form.upload-form button:hover {
             background-color: #00307a;
-        }
-        /* FLASH MESSAGE */
-        .flash-message {
-            margin-bottom: 15px;
-            padding: 10px;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        .flash-message.success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        .flash-message.danger {
-            background-color: #f8d7da;
-            color: #721c24;
         }
         /* TABLE STYLE */
         .user-table {
@@ -204,7 +207,7 @@
         <button data-section="clients" onclick="showSection('clients')">📋 Daftar Client</button>
         <button data-section="incoming" onclick="showSection('incoming')">📥 Client Masuk</button>
         <button data-section="projects" onclick="showSection('projects')">📈 Project Clients</button>
-        <button data-section="projects" onclick="showSection('messages-section')">📈 pesan</button>
+        <button data-section="messages-section" onclick="showSection('messages-section')">📨 Pesan</button>
         <button data-section="files" onclick="showSection('files')">📁 Files Uploaded</button>
         <button data-section="settings" onclick="showSection('settings')">⚙️ Pengaturan</button>
     </div>
@@ -216,14 +219,12 @@
             <h1>Selamat datang, {{ email }}!</h1>
         </div>
 
-        <!-- Flash messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="flash-message {{ category }}">{{ message }}</div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
+        <!-- FLASH MESSAGE -->
+        {% if flash_message %}
+        <div class="flash-message {{ flash_category }}">
+            {{ flash_message }}
+        </div>
+        {% endif %}
 
         <!-- HOME -->
         <section id="section-home" class="active">
@@ -235,6 +236,7 @@
             <form class="upload-form" action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
                 <label for="client_id">Pilih Client:</label>
                 <select name="client_id" id="client_id" required>
+                     <option value="" disabled selected>-- Pilih Client --</option>
                     {% for client in clients %}
                     <option value="{{ client.id }}">{{ client.email }}</option>
                     {% endfor %}
@@ -242,9 +244,12 @@
 
                 <label for="project_name">Pilih Project:</label>
                 <select name="project_name" id="project_name" required>
+                     <option value="" disabled selected>-- Pilih Project --</option>
+                      
                     {% for project in projects %}
                     <option value="{{ project.project_name }}">{{ project.project_name }} ({{ project.user_email }})</option>
                     {% endfor %}
+                    <option value="website_cafe">Website Cafe</option>
                 </select>
 
                 <input type="file" name="file" required />
@@ -356,23 +361,26 @@
             <p>Tidak ada project untuk client ini.</p>
             {% endfor %}
         </section>
-    
-    <section id="messages-section">
-  <h3>Kirim Pesan ke Client</h3>
-  <form action="{{ url_for('send_admin_message') }}" method="post">
-    <label for="client_email">Pilih Client:</label>
-    <select name="client_email" id="client_email" required>
-      {% for client in clients %}
-        <option value="{{ client.email }}">{{ client.email }}</option>
-      {% endfor %}
-    </select><br/>
 
-    <label for="message">Pesan:</label><br/>
-    <textarea name="message" id="message" rows="4" required></textarea><br/>
+        <!-- MESSAGES -->
+        <section id="messages-section">
+            <h3>Kirim Pesan ke Client</h3>
+            <form action="{{ url_for('send_admin_message') }}" method="post">
+                <label for="client_email">Pilih Client:</label>
+                <select name="client_email" id="client_email" required>
+                    <option value="" disabled selected>-- Pilih Client --</option>
+                    {% for client in clients %}
+                    <option value="{{ client.email }}">{{ client.email }}</option>
+                    {% endfor %}
+                </select><br/><br/>
 
-    <button type="submit">Kirim Pesan</button>
-  </form>
-</section>
+                <label for="message">Pesan:</label><br/>
+                <textarea name="message" id="message" rows="4" required></textarea><br/><br/>
+
+                <button type="submit">Kirim Pesan</button>
+            </form>
+        </section>
+
         <!-- FILES UPLOADED -->
         <section id="section-files">
             <h2>Files Uploaded</h2>
@@ -416,14 +424,25 @@
 
     <script>
         function showSection(section) {
+            // Hide all sections
             document.querySelectorAll('#content-area section').forEach(sec => sec.classList.remove('active'));
-            const sel = document.getElementById(`section-${section}`);
-            if (sel) sel.classList.add('active');
+            // Show selected section
+            const selectedSection = document.getElementById(`section-${section}`);
+            if (selectedSection) selectedSection.classList.add('active');
 
+            // Update sidebar buttons active class
             document.querySelectorAll('.sidebar button').forEach(btn => btn.classList.remove('active'));
-            const btn = Array.from(document.querySelectorAll('.sidebar button')).find(b => b.dataset.section === section);
-            if (btn) btn.classList.add('active');
+            const activeBtn = Array.from(document.querySelectorAll('.sidebar button')).find(b => b.dataset.section === section);
+            if (activeBtn) activeBtn.classList.add('active');
         }
+
+        // Optional: load default active section on page load if needed
+        document.addEventListener('DOMContentLoaded', () => {
+            const activeBtn = document.querySelector('.sidebar button.active');
+            if (activeBtn) {
+                showSection(activeBtn.dataset.section);
+            }
+        });
     </script>
 
 </body>

@@ -605,3 +605,17 @@ def logout():
 if __name__ == '__main__':
     # Jangan gunakan debug=True di production, gunakan HTTPS dan proxy jika perlu
     app.run(debug=False, use_reloader=False)
+
+
+
+
+
+git add .
+git commit -m "Update index.html, style.css, login.html, dashboard.html dan Admin_Dashboard.html" 
+git push origin main
+
+
+
+(venv) PS C:\Users\LENOVO\Downloads\portfolio_website\portfolio_website> tasklist | findstr python
+>>
+(venv) PS C:\Users\LENOVO\Downloads\portfolio_website\portfolio_website> 
