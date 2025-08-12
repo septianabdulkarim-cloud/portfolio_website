@@ -1,4 +1,10 @@
+import os
+import uuid
+import secrets
+import functools
+from datetime import datetime
 import sqlite3
+
 from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
@@ -7,10 +13,6 @@ from markupsafe import escape
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
-import os
-import uuid
-import secrets
-import functools
 
 # Load environment variables
 load_dotenv()
@@ -73,10 +75,26 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+def load_messages():
+    if not os.path.exists(messages_file):
+        return []
+    try:
+        with open(messages_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError) as e:
+        print(f"Error load messages: {e}")
+        return []
+
+def save_messages(messages):
+    try:
+        with open(messages_file, 'w', encoding='utf-8') as f:
+            json.dump(messages, f, indent=2, ensure_ascii=False)
+    except IOError as e:
+        print(f"Error save messages: {e}")
+
 def init_db():
     conn = get_db_connection()
     cur = conn.cursor()
-    # Tables consistent in one DB
     cur.execute('''
     CREATE TABLE IF NOT EXISTS users_admin (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -98,7 +116,6 @@ def init_db():
         created_at TEXT DEFAULT (datetime('now'))
     );
     ''')
-    # Tambah tabel projects
     cur.execute('''
     CREATE TABLE IF NOT EXISTS projects (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -109,12 +126,23 @@ def init_db():
         FOREIGN KEY(user_email) REFERENCES users_client(email)
     );
     ''')
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS files (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_email TEXT NOT NULL,
+        project_name TEXT NOT NULL,
+        filename TEXT NOT NULL,
+        filepath TEXT NOT NULL,
+        uploaded_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY(user_email) REFERENCES users_client(email)
+    );
+    ''')
     conn.commit()
     conn.close()
 
 init_db()
 
-# --------- CSRF Protection (simple) ---------
+# --------- CSRF Protection ---------
 
 def generate_csrf_token():
     if '_csrf_token' not in session:
@@ -322,49 +350,116 @@ def login():
             session.clear()
             session['email'] = email
             session['is_admin'] = False
-            # Jangan simpan dashboard_url di session, pakai URL langsung di redirect
             return redirect(url_for('client_dashboard', dashboard_url=dashboard_url))
 
         flash("Email tidak ditemukan!", "danger")
 
     return render_template("login.html")
 
-@app.route('/dashboard/<dashboard_url>')
+@app.route('/dashboard/<dashboard_url>', methods=['GET'])
 @login_required(is_admin_required=False)
 def client_dashboard(dashboard_url):
     email_session = session['email']
 
     conn = get_db_connection()
+    conn.row_factory = dict_factory
     cur = conn.cursor()
 
-    # Cek apakah dashboard_url ada di DB dan cocok dengan email session
     cur.execute("SELECT email FROM users_client WHERE dashboard_url = ?", (dashboard_url,))
     user = cur.fetchone()
-
     if not user or user['email'] != email_session:
         conn.close()
         flash("Akses tidak valid!", "danger")
         return redirect(url_for('login'))
 
-    # Ambil project + progress client ini
     cur.execute("SELECT project_name, progress FROM projects WHERE user_email = ?", (email_session,))
     projects = cur.fetchall()
 
+    cur.execute("SELECT project_name, filename, uploaded_at FROM files WHERE user_email = ? ORDER BY uploaded_at DESC", (email_session,))
+    files_raw = cur.fetchall()
+
+    files_per_project = {}
+    for row in files_raw:
+        project = row['project_name']
+        files_per_project.setdefault(project, []).append({
+            'filename': row['filename'],
+            'uploaded_at': row['uploaded_at']
+        })
+
     conn.close()
 
-    return render_template("dashboard.html", email=email_session, projects=projects)
+    # Ambil pesan dari file JSON yang terkait client (sender atau receiver)
+    messages = load_messages()
+    messages_client = [m for m in messages if m['sender_email'] == email_session or m['receiver_email'] == email_session]
+
+    return render_template(
+        "dashboard.html",
+        email=email_session,
+        projects=projects,
+        files_per_project=files_per_project,
+        messages=messages_client
+    )
 
 
-@app.route('/admin_dashboard')
+app.route('/admin_dashboard', methods=['GET', 'POST'])
 @login_required(is_admin_required=True)
 def admin_dashboard():
     email_session = session['email']
 
+    if request.method == 'POST':
+        # Proses upload file
+        if 'file' not in request.files:
+            flash('Tidak ada file yang dipilih', 'danger')
+            return redirect(url_for('admin_dashboard'))
+
+        file = request.files['file']
+        if file.filename == '':
+            flash('Nama file kosong', 'danger')
+            return redirect(url_for('admin_dashboard'))
+
+        client_id = request.form.get('client_id')
+        project_name = request.form.get('project_name')
+
+        if not client_id or not project_name:
+            flash('Client dan project harus dipilih', 'danger')
+            return redirect(url_for('admin_dashboard'))
+
+        filename = secure_filename(file.filename)
+
+        client_folder = os.path.join(app.config['UPLOAD_FOLDER'], client_id)
+        os.makedirs(client_folder, exist_ok=True)
+
+        save_path = os.path.join(client_folder, filename)
+        file.save(save_path)
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT email FROM users_client WHERE id = ?", (client_id,))
+        client = cur.fetchone()
+        if not client:
+            conn.close()
+            flash('Client tidak ditemukan', 'danger')
+            return redirect(url_for('admin_dashboard'))
+
+        user_email = client['email']
+        now = datetime.now().isoformat(timespec='seconds')
+
+        cur.execute("""
+            INSERT INTO files (user_email, project_name, filename, filepath, uploaded_at)
+            VALUES (?, ?, ?, ?, ?)
+        """, (user_email, project_name, filename, save_path, now))
+        conn.commit()
+        conn.close()
+
+        flash('File berhasil diupload', 'success')
+        return redirect(url_for('admin_dashboard'))
+
+    # GET request: tampilkan dashboard admin
     conn = get_db_connection()
-    conn.row_factory = dict_factory  # <-- Set supaya fetchall menghasilkan dict
+    conn.row_factory = dict_factory
     cur = conn.cursor()
 
-    # Cek admin valid
+    # Validasi admin
     cur.execute("SELECT email FROM users_admin WHERE email = ?", (email_session,))
     user = cur.fetchone()
     if not user:
@@ -376,20 +471,50 @@ def admin_dashboard():
     cur.execute("SELECT id, email, created_at FROM users_client ORDER BY created_at DESC")
     clients = cur.fetchall()
 
-    cur.execute("SELECT id, email, created_at FROM users_client WHERE status = 'pending' ORDER BY created_at DESC")
-    new_clients = cur.fetchall()
-
-    # Ambil semua project dengan progressnya
-    cur.execute("""
-        SELECT p.id, p.user_email, p.project_name, p.progress
-        FROM projects p
-        ORDER BY p.user_email, p.project_name
-    """)
+    # Ambil data project
+    cur.execute("SELECT id, user_email, project_name, progress FROM projects ORDER BY user_email, project_name")
     projects = cur.fetchall()
+
+    # Ambil file
+    cur.execute("SELECT id, user_email, project_name, filename, filepath, uploaded_at FROM files ORDER BY uploaded_at DESC")
+    files = cur.fetchall()
 
     conn.close()
 
-    return render_template("Admin_Dashboard.html", email=email_session, clients=clients, new_clients=new_clients, projects=projects)
+    # Ambil pesan dari file JSON (tanpa DB)
+    messages = load_messages()
+
+    return render_template(
+        "Admin_Dashboard.html",
+        email=email_session,
+        clients=clients,
+        projects=projects,
+        files=files,
+        messages=messages
+    )
+
+
+@app.route('/update_project_progress', methods=['POST'])
+@login_required(is_admin_required=True)
+def update_project_progress():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    for key, value in request.form.items():
+        if key.startswith('progress_'):
+            project_id = key.split('_')[1]
+            try:
+                progress_value = int(value)
+                if 0 <= progress_value <= 100:
+                    cur.execute("UPDATE projects SET progress = ? WHERE id = ?", (progress_value, project_id))
+            except ValueError:
+                pass
+
+    conn.commit()
+    conn.close()
+
+    flash("Progress project berhasil diperbarui.", "success")
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/delete_client/<int:id>', methods=['POST'])
 @login_required(is_admin_required=True)
@@ -442,25 +567,53 @@ def upload_file():
 
         file = request.files.get('file')
         client_id = request.form.get('client_id')
+        project_name = request.form.get('project_name', '').strip()
 
         if not client_id or not any(str(client['id']) == client_id for client in clients):
             flash('Client tidak valid.', 'danger')
             return redirect(url_for('upload_file'))
 
+        if not project_name:
+            flash('Project harus diisi.', 'danger')
+            return redirect(url_for('upload_file'))
+
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
 
+            # Simpan file ke folder per client_id
             client_folder = os.path.join(app.config['UPLOAD_FOLDER'], client_id)
             os.makedirs(client_folder, exist_ok=True)
 
-            file.save(os.path.join(client_folder, filename))
-            flash(f'File berhasil diupload untuk client ID: {client_id}', 'success')
+            save_path = os.path.join(client_folder, filename)
+            file.save(save_path)
+
+            # Simpan metadata file ke DB
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute("SELECT email FROM users_client WHERE id = ?", (client_id,))
+            client = cur.fetchone()
+            if not client:
+                conn.close()
+                flash('Client tidak ditemukan.', 'danger')
+                return redirect(url_for('upload_file'))
+
+            user_email = client['email']
+            now = datetime.now().isoformat(timespec='seconds')
+
+            cur.execute("""
+                INSERT INTO files (user_email, project_name, filename, filepath, uploaded_at)
+                VALUES (?, ?, ?, ?, ?)
+            """, (user_email, project_name, filename, save_path, now))
+            conn.commit()
+            conn.close()
+
+            flash(f'File berhasil diupload untuk client {user_email}', 'success')
             return redirect(url_for('upload_file'))
         else:
             flash('File tidak valid atau ekstensi tidak diizinkan.', 'danger')
             return redirect(url_for('upload_file'))
 
-    # GET method: tampilkan file per client
+    # GET: tampilkan halaman upload dengan daftar client dan file per client
     files_per_client = {}
     for client in clients:
         folder = os.path.join(app.config['UPLOAD_FOLDER'], str(client['id']))
@@ -469,34 +622,39 @@ def upload_file():
         else:
             files_per_client[client['email']] = []
 
-    return render_template('dashboard.html', clients=clients, files_per_client=files_per_client)
+    return render_template(
+        'upload.html',
+        clients=clients,
+        files_per_client=files_per_client,
+        csrf_token=generate_csrf_token()
+    )
 
+@app.route('/send_client_message', methods=['POST'])
+@login_required(is_admin_required=False)
+def send_client_message():
+    sender_email = session['email']
+    admin_email = 'admin@example.com'  # Ganti dengan email admin yang valid, atau bisa multiple admin nanti
 
-@app.route('/update_project_progress', methods=['POST'])
-@login_required(is_admin_required=True)
-def update_project_progress():
-    conn = get_db_connection()
-    cur = conn.cursor()
+    message_text = request.form.get('message')
 
-    # Ambil semua key dari form yang berisi progress update
-    # Format inputnya: progress_<project_id>
-    for key, value in request.form.items():
-        if key.startswith('progress_'):
-            project_id = key.split('_')[1]
-            try:
-                progress_value = int(value)
-                if 0 <= progress_value <= 100:
-                    # Update progress di DB
-                    cur.execute("UPDATE projects SET progress = ? WHERE id = ?", (progress_value, project_id))
-            except ValueError:
-                # Abaikan jika bukan angka valid
-                pass
+    if not message_text:
+        flash('Pesan harus diisi', 'danger')
+        return redirect(request.referrer or url_for('client_dashboard', dashboard_url=''))
 
-    conn.commit()
-    conn.close()
+    new_message = {
+        'sender_email': sender_email,
+        'receiver_email': admin_email,
+        'message': message_text,
+        'sent_at': datetime.now().isoformat(timespec='seconds')
+    }
 
-    flash("Progress project berhasil diperbarui.", "success")
-    return redirect(url_for('admin_dashboard'))
+    with messages_lock:
+        messages = load_messages()
+        messages.append(new_message)
+        save_messages(messages)
+
+    flash('Pesan berhasil dikirim', 'success')
+    return redirect(request.referrer or url_for('client_dashboard', dashboard_url=''))
 
 @app.route('/logout')
 def logout():
@@ -506,8 +664,5 @@ def logout():
 
 
 if __name__ == '__main__':
-    # Jangan debug=True di production, gunakan HTTPS dan proxy jika perlu
+    # Jangan gunakan debug=True di production, gunakan HTTPS dan proxy jika perlu
     app.run(debug=False, use_reloader=False)
-
-
-

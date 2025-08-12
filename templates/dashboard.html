@@ -305,93 +305,185 @@
 </nav>
 
 <main class="content-wrapper" id="content-area" tabindex="0" aria-live="polite">
+    <!-- Initial content: Profile -->
     <h1>Profil Saya</h1>
     <p>Selamat datang, {{ email }}! Ini adalah halaman profil Anda.</p>
-      <section>
-    <!-- Daftar File per Client -->
-    <div class="uploaded-files">
-        <h3>Daftar File yang Sudah Diunggah</h3>
-        {% for client in clients %}
-        <div class="client-files">
-            <h4>{{ client.email }}</h4>
-            {% if files_per_client[client.id] %}
-                <ul>
-                    {% for filename in files_per_client[client.id] %}
-                    <li>{{ filename }}</li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>Tidak ada file yang diupload.</p>
-            {% endif %}
-        </div>
+      <!-- Section daftar file yang sudah diupload -->
+   <section>
+  <div class="uploaded-files">
+    <h3>Daftar File yang Sudah Diunggah (Per Client)</h3>
+    {% for client in clients %}
+    <div class="client-files">
+      <h4>{{ client.email }}</h4>
+      {% if files_per_client[client.id] %}
+      <ul>
+        {% for filename in files_per_client[client.id] %}
+        <li>{{ filename }}</li>
         {% endfor %}
+      </ul>
+      {% else %}
+      <p>Tidak ada file yang diupload.</p>
+      {% endif %}
     </div>
-    </section>
+    {% endfor %}
+  </div>
+
+  <div class="uploaded-files" style="margin-top: 2rem;">
+    <h3>Daftar File yang Sudah Diunggah (Per Project)</h3>
+    {% if files_per_project %}
+      {% for project_name, files in files_per_project.items() %}
+      <div class="project-files">
+        <h4>Project: {{ project_name }}</h4>
+        <ul>
+          {% for file in files %}
+          <li>{{ file.filename }} <small>(diunggah: {{ file.uploaded_at }})</small></li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p>Tidak ada file yang diupload untuk project Anda.</p>
+    {% endif %}
+  </div>
+</section>
+
 </main>
 
-<script>
-    const projects = {{ projects|tojson }};
-    const email = {{ email|tojson }};
-
-    function showContent(section) {
-        const content = document.getElementById('content-area');
-        const buttons = document.querySelectorAll('.sidebar button');
-        buttons.forEach(btn => {
-            btn.classList.remove('active');
-            btn.removeAttribute('aria-current');
-        });
-        const activeBtn = Array.from(buttons).find(btn => btn.dataset.section === section);
-        if (activeBtn) {
-            activeBtn.classList.add('active');
-            activeBtn.setAttribute('aria-current', 'page');
-        }
-
-        let html = '';
-        if (section === 'profile') {
-            html = `
-                <h1>Profil Saya</h1>
-                <p>Selamat datang, ${email}! Ini adalah halaman profil Anda.</p>
-                <section class="file-list" aria-label="Daftar file yang diunggah">
-                    <h3>Daftar File yang Diunggah</h3>
-                    <ul>
-                        {% for file in files %}
-                        <li>{{ file }}</li>
-                        {% else %}
-                        <li>Tidak ada file yang diupload.</li>
-                        {% endfor %}
-                    </ul>
-                </section>
-            `;
-        } else if (section === 'messages') {
-            html = `
-                <h1>Pesan</h1>
-                <p>Ini adalah halaman pesan Anda. Belum ada pesan baru.</p>
-            `;
-        } else if (section === 'settings') {
-            html = `
-                <h1>Pengaturan</h1>
-                <p>Atur preferensi dan informasi akun Anda di sini.</p>
-            `;
-        } else if (section === 'projects') {
-            html = `
-                <h1>Project Anda</h1>
-                <p>Berikut adalah status proyek yang sedang Anda kerjakan:</p>
-                <div class="projects-list">
-                    ${projects.length > 0 ? projects.map(project => `
-                        <div class="project-card">
-                            <h3>${project.project_name}</h3>
-                            <div class="progress-bar">
-                                <div class="progress" style="width: ${project.progress}%;"></div>
-                            </div>
-                            <p>Progress: ${project.progress}%</p>
-                        </div>
-                    `).join('') : '<p>Anda belum memiliki project.</p>'}
-                </div>
-            `;
-        }
-        content.innerHTML = html;
-        content.focus();
-    }
+    <script type="application/json" id="data-json">
+{
+  "projects": {{ projects|tojson|safe }},
+  "email": {{ email|tojson|safe }},
+  "clients": {{ clients|tojson|safe }},
+  "filesPerClient": {{ files_per_client|tojson|safe }},
+  "filesPerProject": {{ files_per_project|tojson|safe }}
+}
 </script>
+
+<script>
+  // Ambil data JSON dari elemen script
+  const dataJsonElement = document.getElementById('data-json');
+  const data = JSON.parse(dataJsonElement.textContent);
+
+  const projects = data.projects;
+  const email = data.email;
+  const clients = data.clients;
+  const filesPerClient = data.filesPerClient;
+  const filesPerProject = data.filesPerProject;
+
+  function showContent(section) {
+    const content = document.getElementById('content-area');
+    const buttons = document.querySelectorAll('.sidebar button');
+    buttons.forEach(btn => {
+      btn.classList.remove('active');
+      btn.removeAttribute('aria-current');
+    });
+    const activeBtn = Array.from(buttons).find(btn => btn.dataset.section === section);
+    if (activeBtn) {
+      activeBtn.classList.add('active');
+      activeBtn.setAttribute('aria-current', 'page');
+    }
+
+    let html = '';
+    if (section === 'profile') {
+      html = `
+        <h1>Profil Saya</h1>
+        <p>Selamat datang, ${email}! Ini adalah halaman profil Anda.</p>
+        <section>
+          <div class="uploaded-files">
+            <h3>Daftar File yang Sudah Diunggah (Per Client)</h3>
+      `;
+
+      if (clients.length > 0) {
+        clients.forEach(client => {
+          const clientId = String(client.id);
+          html += `<div class="client-files"><h4>${client.email}</h4>`;
+
+          if (filesPerClient[clientId] && filesPerClient[clientId].length > 0) {
+            html += '<ul>';
+            filesPerClient[clientId].forEach(filename => {
+              html += `<li>${filename}</li>`;
+            });
+            html += '</ul>';
+          } else {
+            html += `<p>Tidak ada file yang diupload.</p>`;
+          }
+
+          html += '</div>';
+        });
+      } else {
+        html += `<p>Tidak ada client.</p>`;
+      }
+
+      html += `
+          </div>
+          <div class="uploaded-files" style="margin-top: 2rem;">
+            <h3>Daftar File yang Sudah Diunggah (Per Project)</h3>
+      `;
+
+      if (Object.keys(filesPerProject).length > 0) {
+        for (const [projectName, files] of Object.entries(filesPerProject)) {
+          html += `<div class="project-files"><h4>Project: ${projectName}</h4><ul>`;
+          files.forEach(file => {
+            html += `<li>${file.filename} <small>(diunggah: ${file.uploaded_at})</small></li>`;
+          });
+          html += '</ul></div>';
+        }
+      } else {
+        html += `<p>Tidak ada file yang diupload untuk project Anda.</p>`;
+      }
+
+      html += `
+          </div>
+        </section>
+      `;
+    } else if (section === 'messages') {
+      html = `
+        <h1>Pesan</h1>
+        <p>Ini adalah halaman pesan Anda. Belum ada pesan baru.</p>
+      `;
+    } else if (section === 'settings') {
+      html = `
+        <h1>Pengaturan</h1>
+        <p>Atur preferensi dan informasi akun Anda di sini.</p>
+      `;
+    } else if (section === 'projects') {
+      html = `
+        <h1>Project Anda</h1>
+        <p>Berikut adalah status proyek yang sedang Anda kerjakan:</p>
+        <div class="projects-list">
+          ${
+            projects.length > 0
+              ? projects.map(project => `
+                <div class="project-card">
+                  <h3>${project.project_name}</h3>
+                  <div class="progress-bar">
+                    <div class="progress" style="width: ${project.progress}%;"></div>
+                  </div>
+                  <p>Progress: ${project.progress}%</p>
+                </div>
+              `).join('')
+              : '<p>Anda belum memiliki project.</p>'
+          }
+        </div>
+      `;
+    }
+
+    content.innerHTML = html;
+    content.focus();
+  }
+
+  // Event listener sidebar buttons
+  document.querySelectorAll('.sidebar button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      showContent(btn.dataset.section);
+    });
+  });
+
+  // Tampilkan default konten saat halaman load
+  showContent('profile');
+</script>
+
+
 </body>
 </html>
+

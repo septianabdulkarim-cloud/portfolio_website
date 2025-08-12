@@ -1,0 +1,25 @@
+import json
+from threading import Lock
+import os
+
+messages_lock = Lock()
+messages_file = 'messages.json'
+
+def load_messages():
+    if not os.path.exists(messages_file):
+        return []
+    try:
+        with open(messages_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError) as e:
+        print(f"Error load messages: {e}")
+        return []
+
+def save_messages(messages):
+    try:
+        with open(messages_file, 'w', encoding='utf-8') as f:
+            json.dump(messages, f, indent=2, ensure_ascii=False)
+    except IOError as e:
+        print(f"Error save messages: {e}")
+
+

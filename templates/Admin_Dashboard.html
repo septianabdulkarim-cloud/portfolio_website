@@ -5,7 +5,8 @@
     <title>Admin Dashboard - {{ email }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* ... (pakai CSS yang sudah kamu kirim, tidak saya ulang ya) ... */
+         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Poppins', sans-serif;
             display: flex;
@@ -203,6 +204,8 @@
         <button data-section="clients" onclick="showSection('clients')">📋 Daftar Client</button>
         <button data-section="incoming" onclick="showSection('incoming')">📥 Client Masuk</button>
         <button data-section="projects" onclick="showSection('projects')">📈 Project Clients</button>
+        <button data-section="projects" onclick="showSection('messages-section')">📈 pesan</button>
+        <button data-section="files" onclick="showSection('files')">📁 Files Uploaded</button>
         <button data-section="settings" onclick="showSection('settings')">⚙️ Pengaturan</button>
     </div>
 
@@ -236,6 +239,14 @@
                     <option value="{{ client.id }}">{{ client.email }}</option>
                     {% endfor %}
                 </select>
+
+                <label for="project_name">Pilih Project:</label>
+                <select name="project_name" id="project_name" required>
+                    {% for project in projects %}
+                    <option value="{{ project.project_name }}">{{ project.project_name }} ({{ project.user_email }})</option>
+                    {% endfor %}
+                </select>
+
                 <input type="file" name="file" required />
                 <button type="submit">Upload</button>
             </form>
@@ -344,6 +355,55 @@
             {% else %}
             <p>Tidak ada project untuk client ini.</p>
             {% endfor %}
+        </section>
+    
+    <section id="messages-section">
+  <h3>Kirim Pesan ke Client</h3>
+  <form action="{{ url_for('send_admin_message') }}" method="post">
+    <label for="client_email">Pilih Client:</label>
+    <select name="client_email" id="client_email" required>
+      {% for client in clients %}
+        <option value="{{ client.email }}">{{ client.email }}</option>
+      {% endfor %}
+    </select><br/>
+
+    <label for="message">Pesan:</label><br/>
+    <textarea name="message" id="message" rows="4" required></textarea><br/>
+
+    <button type="submit">Kirim Pesan</button>
+  </form>
+</section>
+        <!-- FILES UPLOADED -->
+        <section id="section-files">
+            <h2>Files Uploaded</h2>
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User Email</th>
+                        <th>Project Name</th>
+                        <th>Filename</th>
+                        <th>Uploaded At</th>
+                        <th>Filepath</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr>
+                        <td>{{ file.id }}</td>
+                        <td>{{ file.user_email }}</td>
+                        <td>{{ file.project_name }}</td>
+                        <td>{{ file.filename }}</td>
+                        <td>{{ file.uploaded_at }}</td>
+                        <td>{{ file.filepath }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align:center;">Tidak ada file yang diupload.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </section>
 
         <!-- SETTINGS -->
