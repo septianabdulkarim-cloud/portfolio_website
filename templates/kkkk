@@ -34,6 +34,7 @@
                 <li><a class="nav-link" href="#services"><span class="material-icons">build</span> Services</a></li>
                 <li><a class="nav-link" href="#projects"><span class="material-icons">work</span> Projects</a></li>
                 <li><a class="nav-link" href="#skills"><span class="material-icons">star</span> Skills</a></li>
+                <li><a class="nav-link" href="#contact"><span class="material-icons">email</span> Contact</a></li>
                 <li><a class="nav-link" href="/login"><span class="material-icons">person</span> Khusus client</a></li>
             </ul>
         </div>
@@ -325,30 +326,6 @@
                     </div>
                 </details>
             </div>
-           <div class="card">
-    <details>
-        <summary>
-            <div class="card-summary">
-                <img src="/static/image/41.jpg" alt="Portofolio Pribadi">
-                <div class="card-text">
-                    <h5>👤 PAKET 4: Promo Spesial Mahasiswa & Profesional Muda</h5>
-                    <p>Paket lengkap untuk membangun portofolio profesional yang siap menarik perhatian recruiter atau klien. Elegan, minimalis, dan mobile-friendly!</p>
-                </div>
-            </div>
-        </summary>
-        <div class="card-detail">
-            <img src="/static/image/OIP 42.jpg" alt="Portofolio Pribadi Full">
-            <ul>
-                <li>CV digital lengkap dengan proyek unggulan</li>
-                <li>Desain modern dan minimalis yang elegan</li>
-                <li>Tampilan profesional yang mudah diakses</li>
-                <li>Mobile-friendly, responsif di semua perangkat</li>
-                <li>Mendukung branding personal Anda</li>
-            </ul>
-            <p><strong>💰 Harga Promo:</strong> Rp 500.000 <br><em>Dapatkan sekarang dan tunjukkan profesionalitasmu!</em></p>
-        </div>
-    </details>
-</div>
 
         </div>
     </div>
@@ -576,19 +553,6 @@ setInterval(() => {
     current = (current + 1) % testimonials.length;
     showTestimonial(current);
 }, 6000);
-// Fade-in saat scroll
-const skills = document.querySelectorAll('.skill-item');
-
-const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-        if(entry.isIntersecting){
-            entry.target.classList.add('visible');
-        }
-    });
-}, { threshold: 0.2 });
-
-skills.forEach(skill => observer.observe(skill));
-
 </script>
 
 </body>

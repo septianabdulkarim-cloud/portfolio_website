@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="/static/image/6091307260287504134.jpg" type="image/png">
-
   <title>Login - Aplikasi</title>
+
   <style>
     /* Reset dasar */
     * {
@@ -26,6 +26,7 @@
       user-select: none;
     }
 
+    /* Container utama */
     .container {
       background: #fff;
       border-radius: 20px;
@@ -96,17 +97,13 @@
       height: 36px;
       background: white;
       border-radius: 50%;
-      box-shadow: inset 0 3px 6px #bbb;
       border: 2px solid #666;
+      box-shadow: inset 0 3px 6px #bbb;
       overflow: hidden;
       transition: background-color 0.3s;
     }
-    .eye.left {
-      left: 30px;
-    }
-    .eye.right {
-      right: 30px;
-    }
+    .eye.left { left: 30px; }
+    .eye.right { right: 30px; }
 
     /* Robot pupils */
     .pupil {
@@ -145,9 +142,9 @@
       transform: translateX(-50%);
       box-shadow: inset 0 2px 4px #3451c8;
     }
-    .stripe1 { top: 150px;}
-    .stripe2 { top: 170px;}
-    .stripe3 { top: 190px;}
+    .stripe1 { top: 150px; }
+    .stripe2 { top: 170px; }
+    .stripe3 { top: 190px; }
 
     /* Form container */
     .login-container {
@@ -242,19 +239,17 @@
 </head>
 <body>
   <div class="container">
+    <!-- Robot Ilustrasi -->
     <div class="robot" aria-label="Robot ilustrasi" role="img" id="robot">
-      <div class="eye left">
-        <div class="pupil"></div>
-      </div>
-      <div class="eye right">
-        <div class="pupil"></div>
-      </div>
+      <div class="eye left"><div class="pupil"></div></div>
+      <div class="eye right"><div class="pupil"></div></div>
       <div class="mouth"></div>
       <div class="stripe stripe1"></div>
       <div class="stripe stripe2"></div>
       <div class="stripe stripe3"></div>
     </div>
 
+    <!-- Login Form -->
     <div class="login-container">
       <h2>Login</h2>
       <form method="post" novalidate>
@@ -282,7 +277,6 @@
 
         let dx = e.clientX - eyeCenterX;
         let dy = e.clientY - eyeCenterY;
-
         const dist = Math.sqrt(dx*dx + dy*dy);
         if(dist > maxMove) {
           dx = dx / dist * maxMove;
@@ -295,9 +289,7 @@
 
     // Reset pupil saat mouse keluar robot
     robot.addEventListener('mouseleave', () => {
-      pupils.forEach(pupil => {
-        pupil.style.transform = `translate(0, 0)`;
-      });
+      pupils.forEach(pupil => pupil.style.transform = 'translate(0, 0)');
     });
 
     // Putar suara beep saat robot diklik
