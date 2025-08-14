@@ -20,10 +20,11 @@
     <nav class="navbar">
         <div class="container">
             <!-- Logo -->
-              <a class="navbar-brand" href="#" style="display: flex; align-items: center; gap: 10px;">
-    <img src="/static/image/photo_2025-08-14_12-59-50.jpg" alt="JasWeb Logo" style="height: 40px;" />
-    <span style="font-size: 1rem; font-weight: bold; color: #434b94;">Solution Website</span>
-</a>
+              <a class="navbar-brand" href="" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+              <img src="/static/image/photo_2025-08-14_12-59-50.jpg" alt="JasWeb Logo" style="height: 40px;" />
+             <span style="font-size: 1rem; font-weight: bold; color: #434b94;">Solution Website</span>
+            </a>
+
 
 
             <!-- Toggle Button for Mobile -->
@@ -155,8 +156,8 @@
             <div class="card project-card">
                 <img src="/static/image/Screenshot 2025-08-02 170310.png" alt="AI Chatbot">
                 <div class="card-body">
-                    <h4>AI Chatbot</h4>
-                    <p>On Progress – Membangun chatbot cerdas dengan GPT, LLM lokal, dan integrasi database pengguna.</p>
+                    <h4>AI Cvina</h4>
+                    <p>On Progress – Membangun chatbot cerdas dengan GPT, LLM lokal, dan integrasi database pengguna, Seperti ChatGPT Kelas menengah</p>
                 </div>
             </div>
 
@@ -405,193 +406,91 @@
     </div>
 </section>
 
-<!-- Other Skills Section -->
-<section class="skills">
-    <h2><span class="material-icons"></span></h2>
-    <div class="other-skills">
-        <h3><span class="material-icons"></span>Other Skills</h3>
-        <ul>
-            <li><span class="material-icons">campaign</span> Digital Marketing</li>
-            <li><span class="material-icons">terminal</span> Web Development</li>
-            <li><span class="material-icons">smart_display</span> Content Creation</li>
-            <li><span class="material-icons">emoji_objects</span> Design Thinking</li>
-        </ul>
-    </div>
-</section>
-
 <!-- WhatsApp Floating Button -->
 <a href="https://wa.me/6287722898695" class="whatsapp-float" target="_blank">
     Chat Via WhatsApp
 </a>
 
-<!-- Footer -->
+<!-- FOOTER -->
 <footer class="footer">
-    <div class="container footer-content">
-        <div class="footer-brand">
-            <h3>JasWebcom</h3>
-            <p>Membangun solusi digital modern dan terpercaya untuk bisnis Anda.</p>
-        </div>
+  <div class="footer-container">
 
-        <div class="footer-links">
-            <h4>Quick Links</h4>
-            <ul>
-                <li><a href="#hero">Home</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#services">Services</a></li>
-                <li><a href="#projects">Projects</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
-        </div>
+    <!-- Sitemap Links -->
+    <div class="footer-links">
+      <div>
+        <h4>Sitemap</h4>
+        <ul>
+          <li><a href="">Home</a></li>
+          <li><a href="">About</a></li>
+          <li><a href="">Web design</a></li>
+          <li><a href="">Digital Marketing</a></li>
+          <li><a href="">Career</a></li>
+        </ul>
+      </div>
 
-        <div class="footer-social">
-            <h4>Follow Us</h4>
-            <div class="social-icons">
-                <a href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook">
-                    <span class="material-icons">facebook</span>
-                </a>
-            </div>
-        </div>
+      <div>
+        <h4>&nbsp;</h4>
+        <ul>
+          <li><a href="">Content Creator</a></li>
+          <li><a href="">Shopify</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4>&nbsp;</h4>
+        <ul>
+          <li><a href="">Contact</a></li>
+          <li><a href="">Blog</a></li>
+          <li><a href="">Project request</a></li>
+          <li><a href="">Web Development</a></li>
+          <li><a href="">Sitemap</a></li>
+        </ul>
+      </div>
+    </div>
+<div class="footer-hours">
+  <h4>Jam Sekarang.</h4>
+  <p id="current-time"></p>
+</div>
+
+    <!-- Newsletter Subscription -->
+    <div class="newsletter">
+      <h4>Newsletter Subscription</h4>
+      <form action="/subscribe" method="POST" class="newsletter-form">
+        <input type="email" name="email" placeholder="Your email address" required>
+        <button type="submit">
+          <span class="material-icons">arrow_forward</span>
+        </button>
+      </form>
+      <label>
+        <input type="checkbox" required>
+        You can read about how your data is processed in our 
+        <a href="/privacy-policy">privacy policy</a>.
+      </label>
     </div>
 
-    <div class="footer-bottom">
-        &copy; 2025 JasWebcom. All rights reserved.
+  </div>
+
+
+
+
+  <!-- Footer Bottom -->
+  <div class="footer-bottom">
+    <div class="social">
+      <a href="https://facebook.com" target="_blank">
+        <img src="/static/image/ffacebook.jpg" alt="Facebook" width="20" height="20">
+      </a>
+      <a href="https://instagram.com" target="_blank">
+        <img src="/static/image/instagram.jpg" alt="Instagram" width="20" height="20">
+      </a>
+      <a href="https://linkedin.com" target="_blank">
+        <img src="/static/image/linkind.jpg" alt="LinkedIn" width="20" height="20">
+      </a>
     </div>
+    <p>©2025 – Made with ❤️ in Jakarta</p>
+  </div>
 </footer>
 
-<script>
-/* =========================
-   Toggle Navbar
-========================= */
-const toggleBtn = document.getElementById('navbar-toggle');
-const navMenu = document.querySelector('.navbar-nav');
-
-toggleBtn.addEventListener('click', () => {
-    navMenu.classList.toggle('open');
-});
-
-/* =========================
-   About Image Toggle Text
-========================= */
-const aboutImg = document.getElementById('about-img');
-const aboutText = document.getElementById('about-text');
-
-aboutImg.addEventListener('click', () => {
-    aboutText.classList.toggle('hidden');
-});
-
-// Klik di luar gambar & teks untuk sembunyikan teks
-document.addEventListener('click', (e) => {
-    if (
-        !aboutImg.contains(e.target) &&
-        !aboutText.contains(e.target) &&
-        !aboutText.classList.contains('hidden')
-    ) {
-        aboutText.classList.add('hidden');
-    }
-});
-
-/* =========================
-   Animasi Saat Scroll
-========================= */
-function isInViewport(element) {
-    const rect = element.getBoundingClientRect();
-    return rect.top <= (window.innerHeight || document.documentElement.clientHeight) * 0.85;
-}
-
-function checkAnimation() {
-    const sections = document.querySelectorAll('#alasan-mahal .container');
-    sections.forEach(section => {
-        if (isInViewport(section)) {
-            section.classList.add('visible');
-        }
-    });
-}
-
-window.addEventListener('scroll', checkAnimation);
-window.addEventListener('load', checkAnimation);
-
-/* =========================
-   Ganti Gambar di Projects
-========================= */
-document.querySelectorAll('#projects .project-card img').forEach((img, index, images) => {
-    img.style.cursor = 'pointer';
-
-    img.addEventListener('click', () => {
-        const nextIndex = (index + 1) % images.length;
-
-        // Simpan gambar sekarang
-        const currentSrc = img.src;
-        const currentAlt = img.alt;
-
-        // Ambil gambar berikutnya
-        const nextImg = images[nextIndex];
-
-        // Tukar posisi gambar
-        img.src = nextImg.src;
-        img.alt = nextImg.alt;
-        nextImg.src = currentSrc;
-        nextImg.alt = currentAlt;
-    });
-});
-
-/* =========================
-   Toggle Card Services
-========================= */
-const cards = document.querySelectorAll('#services .card.project-card');
-
-cards.forEach(card => {
-    const img = card.querySelector('img');
-    const body = card.querySelector('.card-body');
-
-    img.style.cursor = 'pointer';
-
-    img.addEventListener('click', () => {
-        // Tutup semua kartu lain
-        cards.forEach(c => {
-            if (c !== card) {
-                c.querySelector('.card-body').classList.remove('active');
-            }
-        });
-
-        // Toggle kartu yang diklik
-        body.classList.toggle('active');
-    });
-});
-
-/* =========================
-   Testimonial Slider
-========================= */
-const testimonials = document.querySelectorAll('#testimonials .testimonial');
-let current = 0;
-
-function showTestimonial(index) {
-    testimonials.forEach((t, i) => {
-        t.classList.toggle('active', i === index);
-    });
-}
-
-// Tampilkan testimonial pertama
-showTestimonial(current);
-
-// Ganti testimonial tiap 6 detik
-setInterval(() => {
-    current = (current + 1) % testimonials.length;
-    showTestimonial(current);
-}, 6000);
-// Fade-in saat scroll
-const skills = document.querySelectorAll('.skill-item');
-
-const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-        if(entry.isIntersecting){
-            entry.target.classList.add('visible');
-        }
-    });
-}, { threshold: 0.2 });
-
-skills.forEach(skill => observer.observe(skill));
-
-</script>
-
 </body>
+<script src="/static/css/script.js"></script>
+
 </html>
