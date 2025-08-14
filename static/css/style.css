@@ -124,11 +124,12 @@ body {
   .navbar-toggle {
     display: block;
   }
+
   .navbar-nav {
     position: fixed;
     top: 56px;
     right: 0;
-    background: white;
+    background: rgba(255, 255, 255, 0.95); /* transparan tipis, hampir putih */
     height: calc(100vh - 56px);
     width: 250px;
     flex-direction: column;
@@ -138,19 +139,25 @@ body {
     transition: transform 0.3s ease;
     box-shadow: -3px 0 10px rgb(0 0 0 / 0.1);
     overflow-y: auto;
+    backdrop-filter: blur(5px); /* efek blur biar lebih modern */
   }
+
   .navbar-nav.open {
     transform: translateX(0);
   }
+
   .navbar-nav li {
     margin-bottom: 0.75rem;
   }
+
   .nav-link {
-    font-size: 1.25rem;
-    padding: 12px 20px;
+    font-size: 1rem;
+    padding: 10px 16px;
     border-radius: 12px;
   }
 }
+
+
 
 
 /*section*/
