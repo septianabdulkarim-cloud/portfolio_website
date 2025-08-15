@@ -151,3 +151,33 @@ function updateTime() {
 
 setInterval(updateTime, 1000);
 updateTime();
+
+
+
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    const targetTime = new Date('2027-08-16T00:00:00+07:00').getTime();
+    const countdownEl = document.getElementById('countdown-cvina');
+
+    function updateCountdown() {
+        const now = new Date().getTime();
+        const distance = targetTime - now;
+
+        if (distance <= 0) {
+            countdownEl.textContent = "Sudah tiba! 🚀";
+            clearInterval(interval);
+            return;
+        }
+
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        countdownEl.textContent = `${days} hari ${hours} jam ${minutes} menit ${seconds} detik`;
+    }
+
+    updateCountdown(); 
+    const interval = setInterval(updateCountdown, 1000);
+});

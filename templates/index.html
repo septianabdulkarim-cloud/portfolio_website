@@ -152,15 +152,17 @@
         <h2>Projects</h2>
         <div class="row">
 
-            <!-- Project 1 -->
-            <div class="card project-card">
-                <img src="/static/image/Screenshot 2025-08-02 170310.png" alt="AI Chatbot">
-                <div class="card-body">
-                    <h4>AI Cvina</h4>
-                    <p>On Progress – Membangun chatbot cerdas dengan GPT, LLM lokal, dan integrasi database pengguna, Seperti ChatGPT Kelas menengah</p>
-                </div>
-            </div>
-
+<!-- Project 1 -->
+<div class="card project-card">
+    <img src="/static/image/Screenshot 2025-08-02 170310.png" alt="AI Chatbot">
+    <div class="card-body">
+        <h4>AI Cvina</h4>
+        <p>On Progress – Membangun chatbot cerdas dengan GPT, LLM lokal, dan integrasi database pengguna, Seperti ChatGPT Kelas menengah</p>
+        
+        <!-- Tempat countdown -->
+        <p id="countdown-cvina" style="font-weight: bold; margin-top: 10px; color: #d9534f;">Countdown:</p>
+    </div>
+</div>
             <!-- Project 2 -->
             <div class="card project-card">
                 <img src="" alt="Belum Tersedia">
@@ -475,5 +477,31 @@
 
 </body>
 <script src="/static/css/script.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const targetTime = new Date('2027-08-16T00:00:00+07:00').getTime();
+    const countdownEl = document.getElementById('countdown-cvina');
 
+    function updateCountdown() {
+        const now = new Date().getTime();
+        const distance = targetTime - now;
+
+        if (distance <= 0) {
+            countdownEl.textContent = "Countdown: Sudah tiba! 🚀";
+            clearInterval(interval);
+            return;
+        }
+
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        countdownEl.textContent = `Countdown: ${days} hari ${hours} jam ${minutes} menit ${seconds} detik`;
+    }
+
+    updateCountdown(); 
+    const interval = setInterval(updateCountdown, 1000);
+});
+</script>
 </html>
