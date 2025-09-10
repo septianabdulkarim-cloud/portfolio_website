@@ -389,8 +389,7 @@ def verify_email(token):
         flash("User tidak ditemukan.", "danger")
         return redirect(url_for('register'))
     finally:
-        conn.close()
-
+        conn.close
 
 @app.route('/login', methods=['GET', 'POST'])
 @limiter.limit("5 per minute", error_message="Terlalu banyak percobaan login. Coba lagi nanti.")

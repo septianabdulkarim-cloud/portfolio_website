@@ -1202,8 +1202,10 @@ body {
 }
 
 /* ===== FOOTER HOURS ===== */
+/* ===== FOOTER HOURS ===== */
 .footer-hours {
   max-width: 250px;
+  margin-left: 40px; /* geser dikit ke kanan */
 }
 
 .footer-hours h4 {
@@ -1213,17 +1215,45 @@ body {
   color: #000;
 }
 
-.footer-hours ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.footer-hours ul li {
+.footer-hours p {
   font-size: 15px;
   color: #555;
   line-height: 1.6;
 }
+.footer-image {
+  text-align: center; /* biar judul dan gambar rata tengah */
+}
+
+.footer-image h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 25px; /* tambah jarak judul ke gambar */
+}
+
+.footer-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.footer-links {
+  display: flex;
+  gap: 40px;
+}
+
+.footer-image img {
+  max-width: 300px; /* bisa disesuaikan */
+  height: auto;
+  border-radius: 15px; /* bikin sudut melengkung */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* efek bayangan biar modern */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.footer-image a:hover img {
+  transform: scale(1.05); /* zoom halus pas hover */
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25); /* bayangan lebih tebal pas hover */
+}
+
 
 /* ===== FOOTER BOTTOM ===== */
 .footer-bottom {
@@ -1249,8 +1279,26 @@ body {
 }
 
 .footer-bottom p {
-  font-size: 13px;
+  font-size: 14px;
   margin-top: 8px;
   color: #555;
 }
+
+/* ===== TAMPILAN DESKTOP (Laptop/layar lebar) ===== */
+@media (min-width: 992px) {
+  .footer-container {
+    justify-content: space-between;
+  }
+
+  .footer-bottom {
+    text-align: center;
+  }
+
+  .footer-bottom .social,
+  .footer-bottom p {
+    display: block;
+    margin: 0 auto;
+  }
+}
+
 /* Responsive */ @media (max-width: 768px) { .footer-container { flex-direction: column; gap: 30px; } .footer-links { gap: 30px; } }
