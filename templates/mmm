@@ -1,0 +1,20 @@
+<!-- Skills Section -->
+<section id="skills" class="bg-dark text-white">
+    <div class="container text-center">
+        <h2>Skills & Tools</h2>
+        <div class="row skills-list">
+            <div class="skill-item">HTML5</div>
+            <div class="skill-item">CSS3</div>
+            <div class="skill-item">JavaScript</div>
+            <div class="skill-item">Python</div>
+            <div class="skill-item">Flask</div>
+            <div class="skill-item">Bootstrap</div>
+            <div class="skill-item">Tailwind CSS</div>
+            <div class="skill-item">SQL / SQLite</div>
+            <div class="skill-item">Git & GitHub</div>
+            <div class="skill-item">AI Integration</div>
+            <div class="skill-item">REST API</div>
+            <div class="skill-item">Firebase</div>
+        </div>
+    </div>
+</section>
