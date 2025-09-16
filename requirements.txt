@@ -1,0 +1,6 @@
+Flask==2.3.3
+Flask-Mail
+flask-limiter
+itsdangerous
+python-dotenv
+gunicorn

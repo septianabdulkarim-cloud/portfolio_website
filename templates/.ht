@@ -1,0 +1,13 @@
+!-- Other Skills Section -->
+<section class="skills">
+    <h2><span class="material-icons"></span></h2>
+    <div class="other-skills">
+        <h3><span class="material-icons"></span>Other Skills</h3>
+        <ul>
+            <li><span class="material-icons">campaign</span> Digital Marketing</li>
+            <li><span class="material-icons">terminal</span> Web Development</li>
+            <li><span class="material-icons">smart_display</span> Content Creation</li>
+            <li><span class="material-icons">emoji_objects</span> Design Thinking</li>
+        </ul>
+    </div>
+</section>

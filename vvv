@@ -1,0 +1,2579 @@
+import sqlite3
+from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+from dotenv import load_dotenv
+from markupsafe import escape
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from werkzeug.utils import secure_filename
+import os
+import uuid
+import secrets
+import functools
+
+# Load environment variables
+load_dotenv()
+
+app = Flask(__name__)
+app.secret_key = os.getenv('SECRET_KEY')
+if not app.secret_key:
+    raise RuntimeError("SECRET_KEY environment variable is not set!")
+
+# Upload folder config
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploaded_files')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Admin secret code from env
+ADMIN_SECRET_CODE = os.getenv('ADMIN_SECRET_CODE')
+if not ADMIN_SECRET_CODE:
+    raise RuntimeError("ADMIN_SECRET_CODE environment variable is not set!")
+
+# Email config from env
+app.config.update(
+    MAIL_SERVER='smtp.gmail.com',
+    MAIL_PORT=587,
+    MAIL_USE_TLS=True,
+    MAIL_USERNAME=os.getenv('MAIL_USERNAME'),
+    MAIL_PASSWORD=os.getenv('MAIL_PASSWORD'),
+    SESSION_COOKIE_SECURE=True,      # only over HTTPS; set False if testing on localhost without HTTPS
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+)
+
+mail = Mail(app)
+
+# Rate limiter config
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"]
+)
+
+# Email token serializer
+s = URLSafeTimedSerializer(app.secret_key)
+
+# Allowed file extensions for upload
+ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'txt', 'docx'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+DATABASE_PATH = 'database.sqlite3'
+
+def get_db_connection():
+    conn = sqlite3.connect(DATABASE_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # Tables consistent in one DB
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS users_admin (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE NOT NULL,
+        token TEXT NOT NULL,
+        dashboard_url TEXT NOT NULL,
+        verified INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT (datetime('now'))
+    );
+    ''')
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS users_client (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE NOT NULL,
+        token TEXT NOT NULL,
+        dashboard_url TEXT NOT NULL,
+        status TEXT DEFAULT 'pending',
+        verified INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT (datetime('now'))
+    );
+    ''')
+    conn.commit()
+    conn.close()
+
+init_db()
+
+# --------- CSRF Protection (simple) ---------
+
+def generate_csrf_token():
+    if '_csrf_token' not in session:
+        session['_csrf_token'] = secrets.token_urlsafe(32)
+    return session['_csrf_token']
+
+def verify_csrf_token(token):
+    return token == session.get('_csrf_token')
+
+app.jinja_env.globals['csrf_token'] = generate_csrf_token
+
+# --------- Decorators ---------
+
+def login_required(is_admin_required=None):
+    def decorator(f):
+        @functools.wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'email' not in session:
+                flash("Silakan login terlebih dahulu.", "warning")
+                return redirect(url_for('login'))
+            if is_admin_required is not None:
+                if session.get('is_admin') != is_admin_required:
+                    flash("Akses tidak diizinkan.", "danger")
+                    return redirect(url_for('login'))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+# --------- Helper functions ---------
+
+def get_all_clients():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, email FROM users_client WHERE verified=1 ORDER BY created_at DESC")
+    clients = cur.fetchall()
+    conn.close()
+    return clients
+
+# --------- Routes ---------
+
+@app.route('/')
+def home():
+    return render_template("index.html")
+
+@app.route('/about')
+def about():
+    return render_template("about.html")
+
+@app.route('/projects')
+def projects():
+    return render_template("projects.html")
+
+@app.route('/contact')
+def contact():
+    return render_template("contact.html")
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        admin_code = request.form.get('admin_code', '').strip()
+
+        if not email or '@' not in email:
+            flash("Email tidak valid!", "danger")
+            return render_template("register.html")
+
+        token = s.dumps(email, salt='email-confirm')
+        dashboard_url = str(uuid.uuid4())
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        # Check if email already registered
+        cur.execute("SELECT 1 FROM users_admin WHERE email = ?", (email,))
+        if cur.fetchone():
+            flash("Email sudah terdaftar sebagai admin!", "danger")
+            conn.close()
+            return render_template("register.html")
+
+        cur.execute("SELECT 1 FROM users_client WHERE email = ?", (email,))
+        if cur.fetchone():
+            flash("Email sudah terdaftar sebagai client!", "danger")
+            conn.close()
+            return render_template("register.html")
+
+        if admin_code:
+            if admin_code != ADMIN_SECRET_CODE:
+                flash("Kode rahasia admin salah!", "danger")
+                conn.close()
+                return render_template("register.html")
+
+            cur.execute(
+                "INSERT INTO users_admin (email, token, dashboard_url, verified) VALUES (?, ?, ?, 0)",
+                (email, token, dashboard_url)
+            )
+            conn.commit()
+            conn.close()
+
+            verify_link = url_for('verify_email', token=token, _external=True)
+            msg = Message('Verifikasi Email Admin Anda', sender=app.config['MAIL_USERNAME'], recipients=[email])
+            msg.body = f'Klik link berikut untuk verifikasi akun admin Anda:\n{verify_link}'
+            mail.send(msg)
+
+            flash('Link verifikasi admin telah dikirim ke email Anda.', 'success')
+            return redirect(url_for('login'))
+
+        else:
+            cur.execute(
+                "INSERT INTO users_client (email, token, dashboard_url, verified) VALUES (?, ?, ?, 0)",
+                (email, token, dashboard_url)
+            )
+            conn.commit()
+            conn.close()
+
+            verify_link = url_for('verify_email', token=token, _external=True)
+            msg = Message('Verifikasi Email Anda', sender=app.config['MAIL_USERNAME'], recipients=[email])
+            msg.body = f'Klik link berikut untuk verifikasi akun Anda:\n{verify_link}'
+            mail.send(msg)
+
+            flash('Link verifikasi telah dikirim ke email Anda.', 'success')
+            return redirect(url_for('login'))
+
+    return render_template("register.html")
+
+@app.route('/verify/<token>')
+def verify_email(token):
+    try:
+        email = s.loads(token, salt='email-confirm', max_age=3600)
+    except SignatureExpired:
+        flash('Link verifikasi sudah kadaluarsa.', 'danger')
+        return redirect(url_for('register'))
+    except BadSignature:
+        flash('Token verifikasi tidak valid.', 'danger')
+        return redirect(url_for('register'))
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("SELECT verified FROM users_client WHERE email = ?", (email,))
+    user_client = cur.fetchone()
+    if user_client:
+        if user_client['verified'] == 1:
+            flash("Email sudah diverifikasi sebelumnya.", "info")
+        else:
+            cur.execute("UPDATE users_client SET verified = 1 WHERE email = ?", (email,))
+            conn.commit()
+            flash("Email berhasil diverifikasi. Silakan login.", "success")
+        conn.close()
+        return redirect(url_for('login'))
+
+    cur.execute("SELECT verified FROM users_admin WHERE email = ?", (email,))
+    user_admin = cur.fetchone()
+    if user_admin:
+        if user_admin['verified'] == 1:
+            flash("Email sudah diverifikasi sebelumnya.", "info")
+        else:
+            cur.execute("UPDATE users_admin SET verified = 1 WHERE email = ?", (email,))
+            conn.commit()
+            flash("Email berhasil diverifikasi. Silakan login.", "success")
+        conn.close()
+        return redirect(url_for('login'))
+
+    conn.close()
+    flash("User tidak ditemukan.", "danger")
+    return redirect(url_for('register'))
+
+@app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute", error_message="Terlalu banyak percobaan login. Coba lagi nanti.")
+def login():
+    if request.method == 'POST':
+        email = escape(request.form.get('email', '').strip().lower())
+        if not email or '@' not in email:
+            flash("Format email tidak valid!", "danger")
+            return render_template("login.html")
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute("SELECT token, verified, dashboard_url FROM users_admin WHERE email = ?", (email,))
+        user_admin = cur.fetchone()
+
+        if user_admin:
+            token_db, verified, dashboard_url = user_admin['token'], user_admin['verified'], user_admin['dashboard_url']
+            if not verified:
+                flash("Akun admin belum diverifikasi!", "warning")
+                conn.close()
+                return render_template("login.html")
+
+            session.clear()
+            session['email'] = email
+            session['is_admin'] = True
+            conn.close()
+            return redirect(url_for('admin_dashboard'))
+
+        cur.execute("SELECT token, verified, dashboard_url FROM users_client WHERE email = ?", (email,))
+        user_client = cur.fetchone()
+        conn.close()
+
+        if user_client:
+            token_db, verified, dashboard_url = user_client['token'], user_client['verified'], user_client['dashboard_url']
+            if not verified:
+                flash("Akun client belum diverifikasi!", "warning")
+                return render_template("login.html")
+
+            session.clear()
+            session['email'] = email
+            session['is_admin'] = False
+            session['dashboard_url'] = dashboard_url
+            return redirect(url_for('client_dashboard'))
+
+        flash("Email tidak ditemukan!", "danger")
+
+    return render_template("login.html")
+
+@app.route('/dashboard')
+@login_required(is_admin_required=False)
+def client_dashboard():
+    email_session = session['email']
+    dashboard_url = session.get('dashboard_url')
+
+    if not dashboard_url:
+        flash("URL dashboard tidak ditemukan!", "danger")
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT dashboard_url FROM users_client WHERE email = ?", (email_session,))
+    result = cur.fetchone()
+    conn.close()
+
+    if not result or result['dashboard_url'] != dashboard_url:
+        flash("Akses tidak valid!", "danger")
+        return redirect(url_for('login'))
+
+    return render_template("dashboard.html", email=email_session)
+
+@app.route('/admin_dashboard')
+@login_required(is_admin_required=True)
+def admin_dashboard():
+    email_session = session['email']
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("SELECT email FROM users_admin WHERE email = ?", (email_session,))
+    user = cur.fetchone()
+    if not user:
+        conn.close()
+        flash("Akses tidak valid!", "danger")
+        return redirect(url_for('login'))
+
+    cur.execute("SELECT id, email, created_at FROM users_client ORDER BY created_at DESC")
+    clients = cur.fetchall()
+
+    cur.execute("SELECT id, email, created_at FROM users_client WHERE status = 'pending' ORDER BY created_at DESC")
+    new_clients = cur.fetchall()
+
+    conn.close()
+
+    return render_template("Admin_Dashboard.html", email=email_session, clients=clients, new_clients=new_clients)
+
+@app.route('/delete_client/<int:id>', methods=['POST'])
+@login_required(is_admin_required=True)
+def delete_client(id):
+    csrf_token = request.form.get('csrf_token')
+    if not verify_csrf_token(csrf_token):
+        abort(403)
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM users_client WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()
+
+    flash("Client berhasil dihapus.", "success")
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/approve_client/<int:id>', methods=['POST'])
+@login_required(is_admin_required=True)
+def approve_client(id):
+    csrf_token = request.form.get('csrf_token')
+    if not verify_csrf_token(csrf_token):
+        abort(403)
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("SELECT email FROM users_client WHERE id = ?", (id,))
+    data = cur.fetchone()
+
+    if data:
+        cur.execute("UPDATE users_client SET status = 'approved' WHERE id = ?", (id,))
+        conn.commit()
+        flash("Client berhasil disetujui.", "success")
+    else:
+        flash("Client tidak ditemukan.", "danger")
+
+    conn.close()
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/upload', methods=['GET', 'POST'])
+@login_required(is_admin_required=True)
+def upload_file():
+    clients = get_all_clients()
+
+    if request.method == 'POST':
+        csrf_token = request.form.get('csrf_token')
+        if not verify_csrf_token(csrf_token):
+            abort(403)
+
+        file = request.files.get('file')
+        client_id = request.form.get('client_id')
+
+        if not client_id or not any(str(client['id']) == client_id for client in clients):
+            flash('Client tidak valid.', 'danger')
+            return redirect(url_for('upload_file'))
+
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+
+            client_folder = os.path.join(app.config['UPLOAD_FOLDER'], client_id)
+            os.makedirs(client_folder, exist_ok=True)
+
+            file.save(os.path.join(client_folder, filename))
+            flash(f'File berhasil diupload untuk client ID: {client_id}', 'success')
+            return redirect(url_for('upload_file'))
+        else:
+            flash('File tidak valid atau ekstensi tidak diizinkan.', 'danger')
+            return redirect(url_for('upload_file'))
+
+    # GET method: tampilkan file per client
+    files_per_client = {}
+    for client in clients:
+        folder = os.path.join(app.config['UPLOAD_FOLDER'], str(client['id']))
+        if os.path.exists(folder):
+            files_per_client[client['email']] = os.listdir(folder)
+        else:
+            files_per_client[client['email']] = []
+
+    return render_template('dashboard.html', clients=clients, files_per_client=files_per_client)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash("Logout berhasil!", "info")
+    return redirect(url_for('login'))
+
+
+if __name__ == '__main__':
+    # Jangan debug=True di production, gunakan HTTPS dan proxy jika perlu
+    app.run(debug=False, use_reloader=False)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Reset & Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #000000;
+  background-color: #f9f9f9;
+  scroll-behavior: smooth;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Container */
+.container {
+  width: 90%;
+  max-width: 1200px;
+  margin: auto;
+  padding: 0 20px;
+}
+
+/* === Reset dasar === */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* === Navbar utama === */
+.navbar {
+  background-color: #1f4d99; /* Warna sama seperti logo */
+  padding: 0;
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+}
+
+/* === Container flex navbar === */
+.navbar .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 75px; /* Samakan dengan tinggi logo */
+  padding: 0 20px;
+}
+
+/* === Logo === */
+.navbar img {
+  display: block;       /* Hindari inline space */
+  height: 100%;         /* Penuhi tinggi navbar */
+  max-height: 75px;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+/* === Brand teks (nama brand) === */
+.navbar-brand {
+  font-weight: bold;
+  font-size: 1.5rem;
+  color: white;
+  text-decoration: none;
+}
+
+/* === Tombol hamburger (jika ditambahkan nanti) === */
+.navbar-toggle {
+  display: none;
+  font-size: 1.8rem;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+/* === Menu navigasi === */
+.navbar-nav {
+  list-style: none;
+  display: flex;
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+  flex-wrap: wrap;
+}
+
+/* === Link menu === */
+.nav-link {
+  display: flex;             /* Sejajarkan ikon dan teks */
+  align-items: center;
+  gap: 0.4rem;
+  color: rgb(250, 247, 247);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #000000;
+}
+
+/* === Ikon Material (dalam link) === */
+.material-icons {
+  font-size: 20px;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* === Responsif Mobile === */
+@media (max-width: 768px) {
+  .navbar .container {
+    flex-wrap: nowrap;
+  }
+
+  .navbar-nav {
+    flex-direction: row;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .navbar-brand {
+    font-size: 1.2rem;
+  }
+
+  .navbar img {
+    max-height: 70px;
+  }
+}
+
+
+
+
+/*bagian hi */
+.hero {
+  position: relative;
+  height: 80vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: rgb(43, 146, 243);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  text-shadow: 1px 1px 4px rgba(255, 255, 255, 0.7);
+}
+
+.hero h1 {
+  font-size: 2.8rem;
+  margin-bottom: 1rem;
+}
+
+.hero p {
+  font-size: 1.3rem;
+  margin-bottom: 1.5rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.8rem 1.5rem;
+  background-color: rgb(43, 146, 243);
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background 0.3s ease;
+}
+
+.btn:hover {
+  background-color: #1c8be0;
+}
+
+.hero-slideshow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.hero-slideshow .slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  animation: fadeSlide 50s infinite;
+}
+
+.hero-slideshow .slide:nth-child(2)  { animation-delay: 5s; }
+.hero-slideshow .slide:nth-child(3)  { animation-delay: 10s; }
+.hero-slideshow .slide:nth-child(4)  { animation-delay: 15s; }
+
+@keyframes fadeSlide {
+  0%   { opacity: 0; }
+  5%   { opacity: 1; }
+  10%  { opacity: 1; }
+  15%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+
+/* =========================================
+   BUTTON STYLES
+========================================= */
+.btn {
+  display: inline-block;
+  background-color: #00adb5;
+  color: white;
+  padding: 0.7rem 1.5rem;
+  margin-top: 1rem;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: background 0.3s ease-in-out;
+}
+
+.btn:hover {
+  background-color: #007d86;
+}
+
+.btn-outline {
+  border: 2px solid #00adb5;
+  background: none;
+  color: #00adb5;
+}
+
+.btn-outline:hover {
+  background-color: #00adb5;
+  color: white;
+}
+
+
+@media (max-width: 768px) {
+  .hero {
+    height: 100vh; /* penuh layar */
+    padding: 20px;
+  }
+
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .hero p {
+    font-size: 1rem;
+  }
+
+  .btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+  
+  .hero-slideshow .slide {
+    background-position: center center;
+    background-size: cover;
+  }
+}
+
+
+/* =========================================
+   SECTION STYLES & UTILITIES
+========================================= */
+section {
+  padding: 80px 20px;
+}
+
+.bg-light {
+  background-color: #f0f0f0;
+}
+
+.bg-white {
+  background-color: #ffffff;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mt-3 {
+  margin-top: 1rem;
+}
+
+
+/* =========================================
+   PROJECT CARD GRID & COMPONENTS
+========================================= */
+.row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.project-card {
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.project-card:hover {
+  transform: translateY(-5px);
+}
+
+.project-card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.card-body {
+  padding: 1rem;
+}
+
+.card-body h5 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  color: #222831;
+}
+
+.card-body p {
+  color: #555;
+  font-size: 0.95rem;
+}
+
+
+    form input, form textarea {
+      width: 90%;
+      max-width: 500px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+
+    .whatsapp-float {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #25D366;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      z-index: 999;
+    }
+
+/* Tools Section Styling */
+.tools {
+  padding: 1rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin: 1rem;
+}
+
+.tools h2 {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+/* Grid Tools */
+.tools ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* Setiap item tool */
+.tools li {
+  display: flex;
+  align-items: center;
+  background-color: #f0f0f0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.tools li:hover {
+  background-color: #e0e0e0;
+}
+
+.tools .material-icons {
+  font-size: 22px;
+  margin-right: 0.5rem;
+  color: #3f51b5;
+}
+
+/* Tablet (2 kolom) */
+@media (max-width: 991px) {
+  .tools ul {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* HP (3 kolom, baris terakhir 2 item) */
+@media (max-width: 767px) {
+  .tools ul {
+    grid-template-columns: repeat(2,0fr);
+  }
+
+  .tools li {
+    font-size: 0.95rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .tools .material-icons {
+    font-size: 20px;
+  }
+}
+
+
+* {
+  box-sizing: border-box;
+}
+/* Animasi fade-in-up */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* State sebelum muncul */
+.tools li {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+/* Tambahkan delay agar muncul bertahap */
+.tools li:nth-child(1) { animation-delay: 0.1s; }
+.tools li:nth-child(2) { animation-delay: 0.2s; }
+.tools li:nth-child(3) { animation-delay: 0.3s; }
+.tools li:nth-child(4) { animation-delay: 0.4s; }
+.tools li:nth-child(5) { animation-delay: 0.5s; }
+.tools li:nth-child(6) { animation-delay: 0.6s; }
+.tools li:nth-child(7) { animation-delay: 0.7s; }
+.tools li:nth-child(8) { animation-delay: 0.8s; }
+
+/* Sembunyikan animasi sebelum masuk ke viewport */
+.tools li.scroll-hidden {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: none;
+}
+
+/* ==== Skills Section ==== */
+.skills {
+  padding: 1rem;
+  background-color: #fff;
+  border-radius: 8px;
+  margin: 1rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.skills h2 {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.skills h3 {
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 1rem 0 0.5rem;
+  color: #444;
+}
+
+.skills ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.language ul li {
+  font-size: 1rem;
+  padding: 0.3rem 0;
+}
+
+/* Other Skills Grid */
+.other-skills ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.8rem;
+}
+
+.other-skills li {
+  display: flex;
+  align-items: center;
+  background-color: #f0f0f0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.other-skills li:hover {
+  background-color: #e0e0e0;
+}
+
+.other-skills li .material-icons {
+  font-size: 22px;
+  margin-right: 0.5rem;
+  color: #3f51b5;
+}
+
+/* Animation Delay */
+.other-skills li:nth-child(1) { animation-delay: 0.2s; }
+.other-skills li:nth-child(2) { animation-delay: 0.4s; }
+.other-skills li:nth-child(3) { animation-delay: 0.6s; }
+.other-skills li:nth-child(4) { animation-delay: 0.8s; }
+
+/* Scroll hidden state */
+.other-skills li.scroll-hidden {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: none;
+}
+
+/* Responsive improvements */
+@media (max-width: 767px) {
+  .skills {
+    padding: 0.8rem;
+  }
+
+  .skills h2,
+  .skills h3 {
+    font-size: 1.2rem;
+  }
+
+  .other-skills ul {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .other-skills li {
+    font-size: 0.95rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .other-skills li .material-icons {
+    font-size: 20px;
+  }
+}
+
+/* Fade in animation */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Footer */
+.footer {
+  background-color: #ffffff;
+  color: rgb(0, 0, 0);
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.9rem;
+  margin-top: 2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .navbar .container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .navbar-toggle {
+    display: block;
+  }
+
+  .navbar-nav {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    display: none;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .navbar-nav.active {
+    display: flex;
+  }
+
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .hero p {
+    font-size: 1.1rem;
+  }
+
+  .btn {
+    padding: 0.6rem 1.2rem;
+  }
+}
+
+
+#testimonialForm {
+  transition: all 0.3s ease;
+}
+
+
+/* Section Marquee */
+.marquee-container {
+  background-color: #33067a;
+  color: #fff;
+  padding: 10px 0;
+  overflow: hidden;
+  position: relative;
+  z-index: 1000;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 40s linear infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+
+
+.typing-text::after {
+  content: "harga semua ini adalah promo jangan sampai terlewatkan";
+  animation: typing 30s steps(100, end) infinite, blink-caret 0.75s step-end infinite;
+  white-space: nowrap;
+  overflow: hidden;
+  display: inline-block;
+  border-right: 2px solid white;
+  font-weight: bold;
+}
+
+@keyframes typing {
+  0% { width: 0 }
+  50% { width: 100% }
+  100% { width: 0 }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: white }
+}
+
+
+
+
+/* === CARD STYLING === */
+.card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  margin: 1rem auto;
+  overflow: hidden;
+  max-width: 100%;
+  width: 100%;
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: scale(1.01);
+}
+
+/* === HIDE DEFAULT DETAILS ARROW === */
+.card summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 1rem;
+}
+.card summary::-webkit-details-marker {
+  display: none;
+}
+
+/* === CARD SUMMARY PREVIEW === */
+.card-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.card-summary img {
+  width: 140px;
+  height: auto;
+  border-radius: 10px;
+  object-fit: cover;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  filter: contrast(1.1) saturate(1.1) brightness(1.05); /* Perjelas kualitas gambar */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* Tambahkan sedikit bayangan */
+}
+
+.card-summary img:hover {
+  transform: scale(1.05);
+  filter: contrast(1.2) saturate(1.2);
+}
+
+.card-text h5 {
+  margin: 0;
+  font-size: 0,95rem;
+  text-align: left;
+}
+
+.card-text p {
+  margin: 0.5rem 0 0 0;
+  text-align: left;
+}
+
+/* === CARD DETAIL (KETIKA DIBUKA) === */
+.card-detail {
+  padding: 1rem;
+  border-top: 1px solid #ddd;
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+.card-detail img {
+  width: 100%;
+  max-height: 600px;
+  object-fit: contain;
+  border-radius: 10px;
+  margin-bottom: 0.75rem;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  filter: contrast(1.1) saturate(1.1) brightness(1.05);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+.card-detail {
+  padding: 1rem;
+  border-top: 1px solid #ddd;
+  animation: fadeIn 0.4s ease-in-out;
+  text-align: left; /* Pastikan isi detail rata kiri */
+}
+
+.card-detail ul {
+  padding-left: 1.2rem;
+  margin: 0.5rem 0;
+  list-style-type: none;
+}
+
+.card-detail ul li {
+  position: relative;
+  padding-left: 1.8rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.card-detail ul li::before {
+  content: "✅";
+  position: absolute;
+  left: 0;
+  color: green;
+}
+
+.card-detail img:hover {
+  transform: scale(1.05);
+  filter: contrast(1.2) saturate(1.2);
+}
+/* === STYLE KHUSUS UNTUK PROMO DALAM CARD === */
+.card-detail p,
+.card-detail li,
+.card-detail span {
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* Untuk emoji dan teks kecil promo */
+.card-detail strong,
+.card-detail b {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* === ANIMASI FADE === */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* === RESPONSIVE UNTUK MOBILE === */
+@media (max-width: 768px) {
+  .card-summary {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .card-summary img {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .card-text {
+    text-align: center;
+  }
+
+  .card-detail img {
+    max-height: unset;
+  }
+}
+
+
+
+
+.info-section {
+  background-color: #fff;
+  padding: 40px 20px;
+  margin: 20px auto;
+  max-width: 800px;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+}
+
+.info-section:hover {
+  transform: translateY(-4px);
+}
+
+.info-section h2 {
+  font-size: 24px;
+  color: #2a3f67;
+  margin-bottom: 15px;
+}
+
+.info-section ul,
+.info-section ol {
+  padding-left: 20px;
+}
+
+.info-section ul li,
+.info-section ol li {
+  margin-bottom: 10px;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+.info-section p {
+  font-size: 16px;
+  line-height: 1.8;
+  margin-top: 20px;
+  color: #555;
+}
+
+.info-section i {
+  color: #2a3f67;
+  margin-right: 10px;
+}
+
+#PriceList details {
+  opacity: 0;
+  transform: translateY(50px);
+  transition: all 0.6s ease;
+}
+
+#PriceList details.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#PriceList details[open] summary {
+  background-color: #f8f9fa;
+  transition: background-color 0.3s ease;
+}
+
+#PriceList details[open] .card-summary img {
+  border: 3px solid #007bff;
+  transform: scale(1.05);
+  transition: transform 0.3s ease, border 0.3s ease;
+}
+
+
+
+
+.skill-item {
+  display: inline-block;
+  margin: 10px;
+  padding: 12px 18px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.08);
+  font-weight: bold;
+  font-size: 1rem;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  cursor: default;
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.skill-item:hover {
+  transform: scale(1.1);
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+
+
+
+
+/* Reset & Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #000000;
+  background-color: #f9f9f9;
+  scroll-behavior: smooth;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Container */
+.container {
+  width: 90%;
+  max-width: 1200px;
+  margin: auto;
+  padding: 0 20px;
+}
+
+/* === Reset dasar === */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* === Navbar utama === */
+.navbar {
+  background-color: #1f4d99; /* Warna sama seperti logo */
+  padding: 0;
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+}
+
+/* === Container flex navbar === */
+.navbar .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 75px; /* Samakan dengan tinggi logo */
+  padding: 0 20px;
+}
+
+/* === Logo === */
+.navbar img {
+  display: block;       /* Hindari inline space */
+  height: 100%;         /* Penuhi tinggi navbar */
+  max-height: 75px;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+/* === Brand teks (nama brand) === */
+.navbar-brand {
+  font-weight: bold;
+  font-size: 1.5rem;
+  color: white;
+  text-decoration: none;
+}
+
+/* === Tombol hamburger (jika ditambahkan nanti) === */
+.navbar-toggle {
+  display: none;
+  font-size: 1.8rem;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+/* === Menu navigasi === */
+.navbar-nav {
+  list-style: none;
+  display: flex;
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+  flex-wrap: wrap;
+}
+
+/* === Link menu === */
+.nav-link {
+  display: flex;             /* Sejajarkan ikon dan teks */
+  align-items: center;
+  gap: 0.4rem;
+  color: rgb(250, 247, 247);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #000000;
+}
+
+/* === Ikon Material (dalam link) === */
+.material-icons {
+  font-size: 20px;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* === Responsif Mobile === */
+@media (max-width: 768px) {
+  .navbar .container {
+    flex-wrap: nowrap;
+  }
+
+  .navbar-nav {
+    flex-direction: row;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .navbar-brand {
+    font-size: 1.2rem;
+  }
+
+  .navbar img {
+    max-height: 70px;
+  }
+}
+
+
+
+
+/*bagian hi */
+.hero {
+  position: relative;
+  height: 80vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: rgb(43, 146, 243);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  text-shadow: 1px 1px 4px rgba(255, 255, 255, 0.7);
+}
+
+.hero h1 {
+  font-size: 2.8rem;
+  margin-bottom: 1rem;
+}
+
+.hero p {
+  font-size: 1.3rem;
+  margin-bottom: 1.5rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.8rem 1.5rem;
+  background-color: rgb(43, 146, 243);
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background 0.3s ease;
+}
+
+.btn:hover {
+  background-color: #1c8be0;
+}
+
+.hero-slideshow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.hero-slideshow .slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  animation: fadeSlide 50s infinite;
+}
+
+.hero-slideshow .slide:nth-child(2)  { animation-delay: 5s; }
+.hero-slideshow .slide:nth-child(3)  { animation-delay: 10s; }
+.hero-slideshow .slide:nth-child(4)  { animation-delay: 15s; }
+
+@keyframes fadeSlide {
+  0%   { opacity: 0; }
+  5%   { opacity: 1; }
+  10%  { opacity: 1; }
+  15%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+
+/* =========================================
+   BUTTON STYLES
+========================================= */
+.btn {
+  display: inline-block;
+  background-color: #00adb5;
+  color: white;
+  padding: 0.7rem 1.5rem;
+  margin-top: 1rem;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: background 0.3s ease-in-out;
+}
+
+.btn:hover {
+  background-color: #007d86;
+}
+
+.btn-outline {
+  border: 2px solid #00adb5;
+  background: none;
+  color: #00adb5;
+}
+
+.btn-outline:hover {
+  background-color: #00adb5;
+  color: white;
+}
+
+
+@media (max-width: 768px) {
+  .hero {
+    height: 100vh; /* penuh layar */
+    padding: 20px;
+  }
+
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .hero p {
+    font-size: 1rem;
+  }
+
+  .btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+  
+  .hero-slideshow .slide {
+    background-position: center center;
+    background-size: cover;
+  }
+}
+
+
+/* =========================================
+   SECTION STYLES & UTILITIES
+========================================= */
+section {
+  padding: 80px 20px;
+}
+
+.bg-light {
+  background-color: #f0f0f0;
+}
+
+.bg-white {
+  background-color: #ffffff;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mt-3 {
+  margin-top: 1rem;
+}
+
+
+/* =========================================
+   PROJECT CARD GRID & COMPONENTS
+========================================= */
+.row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.project-card {
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.project-card:hover {
+  transform: translateY(-5px);
+}
+
+.project-card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.card-body {
+  padding: 1rem;
+}
+
+.card-body h5 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  color: #222831;
+}
+
+.card-body p {
+  color: #555;
+  font-size: 0.95rem;
+}
+
+
+    form input, form textarea {
+      width: 90%;
+      max-width: 500px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+
+    .whatsapp-float {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #25D366;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      z-index: 999;
+    }
+
+/* Tools Section Styling */
+.tools {
+  padding: 1rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin: 1rem;
+}
+
+.tools h2 {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+/* Grid Tools */
+.tools ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* Setiap item tool */
+.tools li {
+  display: flex;
+  align-items: center;
+  background-color: #f0f0f0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.tools li:hover {
+  background-color: #e0e0e0;
+}
+
+.tools .material-icons {
+  font-size: 22px;
+  margin-right: 0.5rem;
+  color: #3f51b5;
+}
+
+/* Tablet (2 kolom) */
+@media (max-width: 991px) {
+  .tools ul {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* HP (3 kolom, baris terakhir 2 item) */
+@media (max-width: 767px) {
+  .tools ul {
+    grid-template-columns: repeat(2,0fr);
+  }
+
+  .tools li {
+    font-size: 0.95rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .tools .material-icons {
+    font-size: 20px;
+  }
+}
+
+
+* {
+  box-sizing: border-box;
+}
+/* Animasi fade-in-up */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* State sebelum muncul */
+.tools li {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+/* Tambahkan delay agar muncul bertahap */
+.tools li:nth-child(1) { animation-delay: 0.1s; }
+.tools li:nth-child(2) { animation-delay: 0.2s; }
+.tools li:nth-child(3) { animation-delay: 0.3s; }
+.tools li:nth-child(4) { animation-delay: 0.4s; }
+.tools li:nth-child(5) { animation-delay: 0.5s; }
+.tools li:nth-child(6) { animation-delay: 0.6s; }
+.tools li:nth-child(7) { animation-delay: 0.7s; }
+.tools li:nth-child(8) { animation-delay: 0.8s; }
+
+/* Sembunyikan animasi sebelum masuk ke viewport */
+.tools li.scroll-hidden {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: none;
+}
+
+/* ==== Skills Section ==== */
+.skills {
+  padding: 1rem;
+  background-color: #fff;
+  border-radius: 8px;
+  margin: 1rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.skills h2 {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.skills h3 {
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 1rem 0 0.5rem;
+  color: #444;
+}
+
+.skills ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.language ul li {
+  font-size: 1rem;
+  padding: 0.3rem 0;
+}
+
+/* Other Skills Grid */
+.other-skills ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.8rem;
+}
+
+.other-skills li {
+  display: flex;
+  align-items: center;
+  background-color: #f0f0f0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.other-skills li:hover {
+  background-color: #e0e0e0;
+}
+
+.other-skills li .material-icons {
+  font-size: 22px;
+  margin-right: 0.5rem;
+  color: #3f51b5;
+}
+
+/* Animation Delay */
+.other-skills li:nth-child(1) { animation-delay: 0.2s; }
+.other-skills li:nth-child(2) { animation-delay: 0.4s; }
+.other-skills li:nth-child(3) { animation-delay: 0.6s; }
+.other-skills li:nth-child(4) { animation-delay: 0.8s; }
+
+/* Scroll hidden state */
+.other-skills li.scroll-hidden {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: none;
+}
+
+/* Responsive improvements */
+@media (max-width: 767px) {
+  .skills {
+    padding: 0.8rem;
+  }
+
+  .skills h2,
+  .skills h3 {
+    font-size: 1.2rem;
+  }
+
+  .other-skills ul {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .other-skills li {
+    font-size: 0.95rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .other-skills li .material-icons {
+    font-size: 20px;
+  }
+}
+
+/* Fade in animation */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Footer */
+.footer {
+  background-color: #ffffff;
+  color: rgb(0, 0, 0);
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.9rem;
+  margin-top: 2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .navbar .container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .navbar-toggle {
+    display: block;
+  }
+
+  .navbar-nav {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    display: none;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .navbar-nav.active {
+    display: flex;
+  }
+
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .hero p {
+    font-size: 1.1rem;
+  }
+
+  .btn {
+    padding: 0.6rem 1.2rem;
+  }
+}
+
+
+#testimonialForm {
+  transition: all 0.3s ease;
+}
+
+
+/* Section Marquee */
+.marquee-container {
+  background-color: #33067a;
+  color: #fff;
+  padding: 10px 0;
+  overflow: hidden;
+  position: relative;
+  z-index: 1000;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 40s linear infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+
+
+.typing-text::after {
+  content: "harga semua ini adalah promo jangan sampai terlewatkan";
+  animation: typing 30s steps(100, end) infinite, blink-caret 0.75s step-end infinite;
+  white-space: nowrap;
+  overflow: hidden;
+  display: inline-block;
+  border-right: 2px solid white;
+  font-weight: bold;
+}
+
+@keyframes typing {
+  0% { width: 0 }
+  50% { width: 100% }
+  100% { width: 0 }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: white }
+}
+
+
+
+
+/* === CARD STYLING === */
+.card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  margin: 1rem auto;
+  overflow: hidden;
+  max-width: 100%;
+  width: 100%;
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: scale(1.01);
+}
+
+/* === HIDE DEFAULT DETAILS ARROW === */
+.card summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 1rem;
+}
+.card summary::-webkit-details-marker {
+  display: none;
+}
+
+/* === CARD SUMMARY PREVIEW === */
+.card-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.card-summary img {
+  width: 140px;
+  height: auto;
+  border-radius: 10px;
+  object-fit: cover;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  filter: contrast(1.1) saturate(1.1) brightness(1.05); /* Perjelas kualitas gambar */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* Tambahkan sedikit bayangan */
+}
+
+.card-summary img:hover {
+  transform: scale(1.05);
+  filter: contrast(1.2) saturate(1.2);
+}
+
+.card-text h5 {
+  margin: 0;
+  font-size: 0,95rem;
+  text-align: left;
+}
+
+.card-text p {
+  margin: 0.5rem 0 0 0;
+  text-align: left;
+}
+
+/* === CARD DETAIL (KETIKA DIBUKA) === */
+.card-detail {
+  padding: 1rem;
+  border-top: 1px solid #ddd;
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+.card-detail img {
+  width: 100%;
+  max-height: 600px;
+  object-fit: contain;
+  border-radius: 10px;
+  margin-bottom: 0.75rem;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  filter: contrast(1.1) saturate(1.1) brightness(1.05);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+.card-detail {
+  padding: 1rem;
+  border-top: 1px solid #ddd;
+  animation: fadeIn 0.4s ease-in-out;
+  text-align: left; /* Pastikan isi detail rata kiri */
+}
+
+.card-detail ul {
+  padding-left: 1.2rem;
+  margin: 0.5rem 0;
+  list-style-type: none;
+}
+
+.card-detail ul li {
+  position: relative;
+  padding-left: 1.8rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.card-detail ul li::before {
+  content: "✅";
+  position: absolute;
+  left: 0;
+  color: green;
+}
+
+.card-detail img:hover {
+  transform: scale(1.05);
+  filter: contrast(1.2) saturate(1.2);
+}
+/* === STYLE KHUSUS UNTUK PROMO DALAM CARD === */
+.card-detail p,
+.card-detail li,
+.card-detail span {
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* Untuk emoji dan teks kecil promo */
+.card-detail strong,
+.card-detail b {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* === ANIMASI FADE === */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* === RESPONSIVE UNTUK MOBILE === */
+@media (max-width: 768px) {
+  .card-summary {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .card-summary img {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .card-text {
+    text-align: center;
+  }
+
+  .card-detail img {
+    max-height: unset;
+  }
+}
+
+
+
+
+.info-section {
+  background-color: #fff;
+  padding: 40px 20px;
+  margin: 20px auto;
+  max-width: 800px;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+}
+
+.info-section:hover {
+  transform: translateY(-4px);
+}
+
+.info-section h2 {
+  font-size: 24px;
+  color: #2a3f67;
+  margin-bottom: 15px;
+}
+
+.info-section ul,
+.info-section ol {
+  padding-left: 20px;
+}
+
+.info-section ul li,
+.info-section ol li {
+  margin-bottom: 10px;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+.info-section p {
+  font-size: 16px;
+  line-height: 1.8;
+  margin-top: 20px;
+  color: #555;
+}
+
+.info-section i {
+  color: #2a3f67;
+  margin-right: 10px;
+}
+
+#PriceList details {
+  opacity: 0;
+  transform: translateY(50px);
+  transition: all 0.6s ease;
+}
+
+#PriceList details.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#PriceList details[open] summary {
+  background-color: #f8f9fa;
+  transition: background-color 0.3s ease;
+}
+
+#PriceList details[open] .card-summary img {
+  border: 3px solid #007bff;
+  transform: scale(1.05);
+  transition: transform 0.3s ease, border 0.3s ease;
+}
+
+
+
+
+.skill-item {
+  display: inline-block;
+  margin: 10px;
+  padding: 12px 18px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.08);
+  font-weight: bold;
+  font-size: 1rem;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  cursor: default;
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.skill-item:hover {
+  transform: scale(1.1);
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+// === Navbar Toggle ===
+document.addEventListener("DOMContentLoaded", function () {
+  const toggleBtn = document.getElementById("navbar-toggle");
+  const navMenu = document.querySelector(".navbar-nav");
+  if (toggleBtn && navMenu) {
+    toggleBtn.addEventListener("click", () => {
+      navMenu.classList.toggle("active");
+    });
+  }
+});
+
+// === Hero Background Slideshow ===
+const heroSection = document.querySelector(".hero-bg");
+const backgrounds = [
+  "/images/OIP.jpg",
+  "/images/image2.jpg",
+  "/images/image3.jpg",
+  "/images/image4.jpg",
+  "/images/image5.jpg",
+  "/images/image6.jpg",
+  "/images/image7.jpg",
+  "/images/image8.jpg",
+  "/images/image9.jpg",
+  "/images/image10.jpg"
+];
+
+let index = 0;
+function changeBackground() {
+  if (heroSection) {
+    heroSection.style.backgroundImage = `url('${backgrounds[index]}')`;
+    index = (index + 1) % backgrounds.length;
+  }
+}
+changeBackground();
+setInterval(changeBackground, 5000);
+
+// === Reveal on Scroll for Tools ===
+const toolItems = document.querySelectorAll(".tools li");
+const revealOnScroll = () => {
+  const windowHeight = window.innerHeight;
+  toolItems.forEach(item => {
+    const position = item.getBoundingClientRect().top;
+    if (position < windowHeight - 50) {
+      item.classList.remove("scroll-hidden");
+      item.style.animationPlayState = "running";
+    }
+  });
+};
+toolItems.forEach(item => {
+  item.classList.add("scroll-hidden");
+  item.style.animationPlayState = "paused";
+});
+window.addEventListener("scroll", revealOnScroll);
+window.addEventListener("load", revealOnScroll);
+
+// === Reveal on Scroll for Skills ===
+const skillItems = document.querySelectorAll(".other-skills li");
+const revealSkills = () => {
+  const windowHeight = window.innerHeight;
+  skillItems.forEach(item => {
+    const position = item.getBoundingClientRect().top;
+    if (position < windowHeight - 50) {
+      item.classList.remove("scroll-hidden");
+      item.style.animationPlayState = "running";
+    }
+  });
+};
+skillItems.forEach(item => {
+  item.classList.add("scroll-hidden");
+  item.style.animationPlayState = "paused";
+});
+window.addEventListener("scroll", revealSkills);
+window.addEventListener("load", revealSkills);
+
+// === Toggle Contact Form ===
+document.addEventListener("DOMContentLoaded", function () {
+  const toggleBtn = document.getElementById("toggleFormBtn");
+  const formContainer = document.getElementById("formContainer");
+  if (toggleBtn && formContainer) {
+    toggleBtn.addEventListener("click", function () {
+      if (formContainer.style.display === "none" || formContainer.style.display === "") {
+        formContainer.style.display = "block";
+        toggleBtn.textContent = "Tutup Formulir";
+      } else {
+        formContainer.style.display = "none";
+        toggleBtn.textContent = "Hubungi Saya";
+      }
+    });
+  }
+});
+
+// === Dynamic Testimonial Form ===
+const testimonialForm = document.getElementById("testimonialForm");
+if (testimonialForm) {
+  testimonialForm.addEventListener("submit", function(event) {
+    event.preventDefault();
+    const name = event.target.name.value;
+    const message = event.target.message.value;
+    const testimonialContainer = document.getElementById("testimonial-list");
+
+    if (testimonialContainer) {
+      const card = document.createElement("div");
+      card.className = "card project-card";
+      card.innerHTML = `
+        <div class="card-body">
+          <p>"${message}"</p>
+          <strong>- ${name}</strong>
+        </div>
+      `;
+      testimonialContainer.appendChild(card);
+      event.target.reset();
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  const cards = document.querySelectorAll('#PriceList details');
+
+  // Reveal saat scroll
+  const revealCards = () => {
+    const triggerBottom = window.innerHeight * 0.9;
+    cards.forEach(card => {
+      const rect = card.getBoundingClientRect();
+      if (rect.top < triggerBottom) {
+        card.classList.add('visible');
+      }
+    });
+  };
+
+  // Animasikan saat dibuka
+  cards.forEach(card => {
+    const summary = card.querySelector('summary');
+    summary.addEventListener('click', function () {
+      // Tutup kartu lain (accordion style)
+      cards.forEach(other => {
+        if (other !== card) {
+          other.removeAttribute('open');
+        }
+      });
+
+      // Scroll smooth
+      setTimeout(() => {
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    });
+  });
+
+  // Trigger pertama kali
+  window.addEventListener('scroll', revealCards);
+  window.addEventListener('load', revealCards);
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+  const aboutSection = document.querySelector("#about");
+  const aboutText = aboutSection.querySelectorAll("p");
+  const aboutTitle = aboutSection.querySelector("h2");
+  const aboutImg = aboutSection.querySelector("img");
+
+  // Awal: sembunyikan semua elemen dengan opacity
+  aboutText.forEach(p => {
+    p.style.opacity = 0;
+    p.style.transform = "translateY(20px)";
+    p.style.transition = "opacity 0.6s ease, transform 0.6s ease";
+  });
+
+  aboutTitle.style.opacity = 0;
+  aboutTitle.style.transition = "opacity 0.8s ease";
+
+  aboutImg.style.opacity = 0;
+  aboutImg.style.transition = "opacity 0.8s ease";
+
+  const revealAbout = () => {
+    const rect = aboutSection.getBoundingClientRect();
+    if (rect.top < window.innerHeight - 100) {
+      aboutTitle.style.opacity = 1;
+      aboutImg.style.opacity = 1;
+
+      aboutText.forEach((p, index) => {
+        setTimeout(() => {
+          p.style.opacity = 1;
+          p.style.transform = "translateY(0)";
+        }, index * 300); // Delay antar paragraf
+      });
+
+      window.removeEventListener("scroll", revealAbout);
+    }
+  };
+
+  window.addEventListener("scroll", revealAbout);
+  revealAbout();
+});
+
+
+
+document.addEventListener("DOMContentLoaded", function () {
+  const skillItems = document.querySelectorAll(".skill-item");
+
+  // Inisialisasi posisi awal
+  skillItems.forEach((item) => {
+    item.style.opacity = 0;
+    item.style.transform = "translateY(20px)";
+    item.style.transition = "all 0.5s ease-out";
+  });
+
+  const revealSkills = () => {
+    const skillsSection = document.querySelector("#skills");
+    const rect = skillsSection.getBoundingClientRect();
+    if (rect.top < window.innerHeight - 100) {
+      skillItems.forEach((item, index) => {
+        setTimeout(() => {
+          item.style.opacity = 1;
+          item.style.transform = "translateY(0)";
+        }, index * 100);
+      });
+      window.removeEventListener("scroll", revealSkills); // Hanya sekali
+    }
+  };
+
+  window.addEventListener("scroll", revealSkills);
+  revealSkills(); // Jalankan langsung jika sudah di posisi
+});

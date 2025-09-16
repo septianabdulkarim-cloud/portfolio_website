@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <title>Admin Dashboard - {{ email }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+    <style>
+        /* Reset & Base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            height: 100vh;
+            background-color: #f4f6fa;
+            color: #333;
+        }
+        /* SIDEBAR */
+        .sidebar {
+            width: 240px;
+            background: linear-gradient(180deg, #004aad, #00307a);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding-top: 20px;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+            user-select: none;
+        }
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+            font-size: 20px;
+        }
+        .sidebar button {
+            background: none;
+            border: none;
+            color: white;
+            padding: 15px 20px;
+            text-align: left;
+            font-size: 15px;
+            cursor: pointer;
+            width: 100%;
+            border-left: 4px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+        .sidebar button:hover,
+        .sidebar button.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #00c6ff;
+        }
+        /* CONTENT AREA */
+        .content {
+            flex-grow: 1;
+            padding: 25px;
+            overflow-y: auto;
+        }
+        .content-header {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .content-header h1 {
+            font-size: 22px;
+            color: #004aad;
+        }
+        /* FLASH MESSAGE */
+        .flash-message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            max-width: 700px;
+        }
+        .flash-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .flash-message.danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        /* SECTIONS */
+        section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            animation: fadeIn 0.3s ease;
+            display: none;
+        }
+        section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from {opacity: 0; transform: translateY(10px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+        /* UPLOAD FORM */
+        form.upload-form {
+            margin-top: 15px;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            max-width: 400px;
+        }
+        form.upload-form input[type="file"] {
+            display: block;
+            margin-bottom: 12px;
+        }
+        form.upload-form button {
+            background-color: #004aad;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+        form.upload-form button:hover {
+            background-color: #00307a;
+        }
+        /* TABLE STYLE */
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .user-table th, .user-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        .user-table th {
+            background-color: #004aad;
+            color: white;
+        }
+        .user-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .user-table tr:hover {
+            background-color: #e6f0ff;
+        }
+        .btn-delete {
+            background-color: #dc3545;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .btn-delete:hover {
+            background-color: #b02a37;
+        }
+        /* PROJECT TABLE */
+        .project-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0 30px;
+            font-size: 14px;
+        }
+        .project-table th, .project-table td {
+            border: 1px solid #ddd;
+            padding: 8px 10px;
+            text-align: left;
+        }
+        .project-table th {
+            background-color: #007bff;
+            color: white;
+        }
+        .project-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .project-table tr:hover {
+            background-color: #e1f0ff;
+        }
+        .btn-update-progress {
+            background-color: #007bff;
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .btn-update-progress:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <h2>Admin Panel</h2>
+        <button class="active" data-section="section-home" onclick="showSection('section-home')">🏠 Beranda</button>
+        <button data-section="section-upload" onclick="showSection('section-upload')">📂 Upload File</button>
+        <button data-section="section-clients" onclick="showSection('section-clients')">📋 Daftar Client</button>
+        <button data-section="section-incoming" onclick="showSection('section-incoming')">📥 Client Masuk</button>
+        <button data-section="section-projects" onclick="showSection('section-projects')">📈 Project Clients</button>
+        <button data-section="messages-section" onclick="showSection('messages-section')">📨 Pesan</button>
+        <button data-section="section-files" onclick="showSection('section-files')">📁 Files Uploaded</button>
+        <button data-section="section-settings" onclick="showSection('section-settings')">⚙️ Pengaturan</button>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content" id="content-area">
+
+        <div class="content-header">
+            <h1>Selamat datang, {{ email }}!</h1>
+        </div>
+
+        <!-- HOME -->
+        <section id="section-home" class="active">
+            <p>Ini adalah halaman dashboard admin Anda.</p>
+        </section>
+
+        <!-- UPLOAD -->
+        <section id="section-upload">
+            <form class="upload-form" action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+                <label for="client_id">Pilih Client:</label>
+                <select name="client_id" id="client_id" required>
+                    <option value="" disabled selected>-- Pilih Client --</option>
+                    {% for client in clients %}
+                    <option value="{{ client.id }}">{{ client.email }}</option>
+                    {% endfor %}
+                </select>
+
+                <label for="project_name">Pilih Project:</label>
+                <select name="project_name" id="project_name" required>
+                    <option value="" disabled selected>-- Pilih Project --</option>
+                    {% for project in projects %}
+                    <option value="{{ project.project_name }}">{{ project.project_name }} ({{ project.user_email }})</option>
+                    {% endfor %}
+                    <option value="website_cafe">Website Cafe</option>
+                </select>
+
+                <input type="file" name="file" required />
+                <button type="submit">Upload</button>
+            </form>
+        </section>
+
+        <!-- CLIENT LIST -->
+        <section id="section-clients">
+            <h2>Daftar Client</h2>
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Email</th>
+                        <th>Tanggal Daftar</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in clients %}
+                    <tr>
+                        <td>{{ client.id }}</td>
+                        <td>{{ client.email }}</td>
+                        <td>{{ client.tanggal_daftar }}</td>
+                        <td>
+                            <form action="{{ url_for('delete_client', id=client.id) }}" method="post" style="display:inline;">
+                                <button type="submit" class="btn-delete" onclick="return confirm('Yakin ingin hapus user ini?')">Hapus</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align:center;">Tidak ada data client</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <!-- INCOMING CLIENTS -->
+        <section id="section-incoming">
+            <h2>Client Masuk</h2>
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Email</th>
+                        <th>Tanggal Daftar</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in new_clients %}
+                    <tr>
+                        <td>{{ client.id }}</td>
+                        <td>{{ client.email }}</td>
+                        <td>{{ client.tanggal_daftar }}</td>
+                        <td>
+                            <form action="{{ url_for('approve_client', id=client.id) }}" method="post" style="display:inline;">
+                                <button type="submit" class="btn-delete" style="background-color:green;">Terima</button>
+                            </form>
+                            <form action="{{ url_for('delete_client', id=client.id) }}" method="post" style="display:inline;">
+                                <button type="submit" class="btn-delete">Hapus</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align:center;">Tidak ada client baru</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <!-- PROJECTS -->
+        <section id="section-projects">
+            <h2>Project Clients</h2>
+            {% for client in clients %}
+            <h3>{{ client.email }}</h3>
+            <form method="POST" action="{{ url_for('update_project_progress') }}">
+                <input type="hidden" name="user_email" value="{{ client.email }}">
+                <table class="project-table">
+                    <thead>
+                        <tr>
+                            <th>Project Name</th>
+                            <th>Progress (%)</th>
+                            <th>Update Progress</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for project in projects %}
+                        {% if project.user_email == client.email %}
+                        <tr>
+                            <td>{{ project.project_name }}</td>
+                            <td>{{ project.progress }}%</td>
+                            <td>
+                                <input type="number" name="progress_{{ project.id }}" min="0" max="100" value="{{ project.progress }}">
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <button type="submit" class="btn-update-progress">Update Progress</button>
+            </form>
+            {% else %}
+            <p>Tidak ada project untuk client ini.</p>
+            {% endfor %}
+        </section>
+
+        <!-- MESSAGES -->
+        <section id="messages-section">
+            <h3>Kirim Pesan ke Client</h3>
+            <form action="{{ url_for('send_admin_message') }}" method="post">
+                <label for="client_email">Pilih Client:</label>
+                <select name="client_email" id="client_email" required>
+                    <option value="" disabled selected>-- Pilih Client --</option>
+                    {% for client in clients %}
+                    <option value="{{ client.email }}">{{ client.email }}</option>
+                    {% endfor %}
+                </select><br/><br/>
+
+                <label for="message">Pesan:</label><br/>
+                <textarea name="message" id="message" rows="4" required></textarea><br/><br/>
+
+                <button type="submit">Kirim Pesan</button>
+            </form>
+        </section>
+
+        <!-- FILES UPLOADED -->
+        <section id="section-files">
+            <h2>Files Uploaded</h2>
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User Email</th>
+                        <th>Project Name</th>
+                        <th>Filename</th>
+                        <th>Uploaded At</th>
+                        <th>Filepath</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr>
+                        <td>{{ file.id }}</td>
+                        <td>{{ file.user_email }}</td>
+                        <td>{{ file.project_name }}</td>
+                        <td>{{ file.filename }}</td>
+                        <td>{{ file.uploaded_at }}</td>
+                        <td>{{ file.filepath }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align:center;">Tidak ada file yang diupload.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <!-- SETTINGS -->
+        <section id="section-settings">
+            <h2>Pengaturan</h2>
+            <p>Kelola preferensi akun Anda di sini.</p>
+        </section>
+
+    </div>
+
+    <script>
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('#content-area section').forEach(sec => sec.classList.remove('active'));
+            // Show selected section
+            const selectedSection = document.getElementById(sectionId);
+            if (selectedSection) selectedSection.classList.add('active');
+
+            // Update sidebar buttons active class
+            document.querySelectorAll('.sidebar button').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = Array.from(document.querySelectorAll('.sidebar button')).find(b => b.dataset.section === sectionId);
+            if (activeBtn) activeBtn.classList.add('active');
+        }
+
+        // Load default active section on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const activeBtn = document.querySelector('.sidebar button.active');
+            if (activeBtn) {
+                showSection(activeBtn.dataset.section);
+            }
+        });
+
+        // Optional: You had a renderMessages function but not integrated or called; you can remove or adapt if needed.
+    </script>
+
+</body>
+</html>

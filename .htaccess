@@ -1,0 +1,23 @@
+# Aktifkan rewrite engine
+RewriteEngine On
+
+# Jika file/folder nyata ada, jangan rewrite
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# URL bersih untuk Home
+RewriteRule ^$ index.html [L]
+
+# URL bersih untuk About / Tentang Kami
+RewriteRule ^about/?$ about.html [L]
+
+# URL bersih untuk Project / Klien
+RewriteRule ^project/?$ project.html [L]
+
+# URL bersih untuk Contact
+RewriteRule ^contact/?$ contact.html [L]
+
+# URL bersih dengan trailing slash tetap diterima
+RewriteRule ^about/(.*)$ about.html [L]
+RewriteRule ^project/(.*)$ project.html [L]
+RewriteRule ^contact/(.*)$ contact.html [L]

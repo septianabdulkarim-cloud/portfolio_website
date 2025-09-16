@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="/static/image/6091307260287504134.jpg" type="image/png">
+  <title>Login - Aplikasi</title>
+
+  <style>
+    /* Reset dasar */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body, html {
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #4b6cb7, #182848);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #333;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* Container utama */
+    .container {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      padding: 40px;
+      max-width: 720px;
+      width: 90%;
+      gap: 40px;
+      position: relative;
+      overflow: visible;
+    }
+
+    /* Robot 2D sederhana */
+    .robot {
+      position: relative;
+      width: 180px;
+      height: 280px;
+      background: linear-gradient(145deg, #6a86ff, #3451c8);
+      border-radius: 40px 40px 30px 30px;
+      box-shadow:
+        inset 4px 4px 10px #5270d9,
+        inset -4px -4px 10px #7f9eff;
+      filter: drop-shadow(0 4px 4px rgba(0,0,0,0.15));
+      transition: transform 0.3s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .robot:active {
+      transform: scale(0.92) rotate(-8deg);
+      transition: transform 0.15s ease;
+    }
+
+    /* Robot antenna */
+    .robot::before {
+      content: "";
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 12px;
+      background: #ff5e5e;
+      border-radius: 50%;
+      box-shadow: 0 10px 0 #666;
+      pointer-events: none;
+    }
+    .robot::after {
+      content: "";
+      position: absolute;
+      top: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 16px;
+      background: #333;
+      border-radius: 2px;
+      pointer-events: none;
+    }
+
+    /* Robot eyes */
+    .eye {
+      position: absolute;
+      top: 70px;
+      width: 36px;
+      height: 36px;
+      background: white;
+      border-radius: 50%;
+      border: 2px solid #666;
+      box-shadow: inset 0 3px 6px #bbb;
+      overflow: hidden;
+      transition: background-color 0.3s;
+    }
+    .eye.left { left: 30px; }
+    .eye.right { right: 30px; }
+
+    /* Robot pupils */
+    .pupil {
+      position: absolute;
+      top: 9px;
+      left: 9px;
+      width: 18px;
+      height: 18px;
+      background: #182848;
+      border-radius: 50%;
+      transition: transform 0.15s ease;
+      pointer-events: none;
+    }
+
+    /* Robot mouth */
+    .mouth {
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90px;
+      height: 20px;
+      background: linear-gradient(90deg, #3451c8 0%, #6a86ff 100%);
+      border-radius: 10px;
+      box-shadow: inset 0 2px 4px #273b8a;
+    }
+
+    /* Robot body stripes */
+    .stripe {
+      position: absolute;
+      width: 120px;
+      height: 6px;
+      background: #4d66d3;
+      border-radius: 3px;
+      left: 50%;
+      transform: translateX(-50%);
+      box-shadow: inset 0 2px 4px #3451c8;
+    }
+    .stripe1 { top: 150px; }
+    .stripe2 { top: 170px; }
+    .stripe3 { top: 190px; }
+
+    /* Form container */
+    .login-container {
+      flex: 1;
+      text-align: center;
+      perspective: 1000px;
+    }
+
+    .login-container h2 {
+      margin-bottom: 32px;
+      color: #182848;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      font-size: 2.4rem;
+      user-select: none;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      transform-style: preserve-3d;
+      transition: transform 0.6s ease;
+      will-change: transform;
+    }
+
+    form:hover, form:focus-within {
+      animation: gravityBounce 1.2s ease-in-out;
+      transform: translateY(-8px) rotateX(8deg);
+      box-shadow: 0 20px 30px rgba(75,108,183,0.35);
+      border-radius: 16px;
+      background: #f0f4ff;
+      padding: 30px;
+    }
+
+    @keyframes gravityBounce {
+      0%, 100% { transform: translateY(0) rotateX(0); }
+      50% { transform: translateY(-15px) rotateX(12deg);}
+    }
+
+    input[type="email"] {
+      padding: 16px 20px;
+      font-size: 18px;
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      outline: none;
+      background: #fafaff;
+      box-shadow: inset 1px 1px 5px #e1e7ff;
+    }
+    input[type="email"]:focus {
+      border-color: #4b6cb7;
+      box-shadow: 0 0 8px 2px #4b6cb7aa;
+      background: white;
+    }
+
+    button {
+      background-color: #4b6cb7;
+      color: white;
+      padding: 16px 0;
+      border: none;
+      border-radius: 12px;
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.3s, box-shadow 0.3s;
+      box-shadow: 0 6px 12px rgba(75,108,183,0.5);
+      user-select: none;
+    }
+    button:hover, button:focus {
+      background-color: #3a5496;
+      box-shadow: 0 10px 20px rgba(58,84,150,0.7);
+    }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      .container {
+        flex-direction: column;
+        padding: 30px 20px;
+        width: 95%;
+      }
+      .robot {
+        margin-bottom: 30px;
+        width: 140px;
+        height: 220px;
+      }
+      .login-container h2 {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Robot Ilustrasi -->
+    <div class="robot" aria-label="Robot ilustrasi" role="img" id="robot">
+      <div class="eye left"><div class="pupil"></div></div>
+      <div class="eye right"><div class="pupil"></div></div>
+      <div class="mouth"></div>
+      <div class="stripe stripe1"></div>
+      <div class="stripe stripe2"></div>
+      <div class="stripe stripe3"></div>
+    </div>
+
+    <!-- Login Form -->
+    <div class="login-container">
+      <h2>Login</h2>
+      <form method="post" novalidate>
+        <input type="email" name="email" placeholder="Email terverifikasi" required />
+        <button type="submit">Login</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Audio beep robot -->
+  <audio id="robotSound" src="/static/sounds/luvvoice.com-20250811-v40Yk4.mp3" preload="auto"></audio>
+
+  <script>
+    const robot = document.getElementById('robot');
+    const pupils = robot.querySelectorAll('.pupil');
+    const robotSound = document.getElementById('robotSound');
+
+    // Pupil mengikuti kursor mouse
+    robot.addEventListener('mousemove', (e) => {
+      const maxMove = 6;
+      pupils.forEach(pupil => {
+        const eyeRect = pupil.parentElement.getBoundingClientRect();
+        const eyeCenterX = eyeRect.left + eyeRect.width / 2;
+        const eyeCenterY = eyeRect.top + eyeRect.height / 2;
+
+        let dx = e.clientX - eyeCenterX;
+        let dy = e.clientY - eyeCenterY;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist > maxMove) {
+          dx = dx / dist * maxMove;
+          dy = dy / dist * maxMove;
+        }
+
+        pupil.style.transform = `translate(${dx}px, ${dy}px)`;
+      });
+    });
+
+    // Reset pupil saat mouse keluar robot
+    robot.addEventListener('mouseleave', () => {
+      pupils.forEach(pupil => pupil.style.transform = 'translate(0, 0)');
+    });
+
+    // Putar suara beep saat robot diklik
+    robot.addEventListener('click', () => {
+      robotSound.currentTime = 0;
+      robotSound.play();
+    });
+  </script>
+</body>
+</html>
