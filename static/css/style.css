@@ -1062,7 +1062,9 @@ body {
 }
 
 
-/*section wa*/
+
+
+/* section wa */
 .whatsapp-float {
   position: fixed;
   bottom: 25px;
@@ -1091,20 +1093,22 @@ body {
   transform: scale(1.05);
 }
 
-/* Optional: add WhatsApp icon before text */
-.whatsapp-float::before {
-  content: '📱';
-  font-size: 1.3rem;
-  display: inline-block;
+/* Icon image */
+.whatsapp-float img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;      /* bikin ikon bulat */
+  object-fit: cover;
 }
 
-/* Responsive: smaller padding and font on small screens */
+/* Responsive */
 @media (max-width: 480px) {
   .whatsapp-float {
     padding: 12px 16px;
     font-size: 0.9rem;
   }
 }
+
 
 /* ===== FOOTER WRAPPER ===== */
 .footer {

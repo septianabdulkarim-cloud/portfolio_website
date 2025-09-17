@@ -18,3 +18,20 @@
         </div>
     </div>
 </section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+git add .
+git commit -m "Update index.html , login.html, register.html dan style.css" 
+git push origin main
