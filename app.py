@@ -276,6 +276,11 @@ def contact():
     return render_template("contact.html")
 
 
+@app.route('/Pricelist')
+def pricelist():
+    return render_template('Pricelist.html')
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
