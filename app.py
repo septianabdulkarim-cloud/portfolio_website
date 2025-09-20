@@ -280,6 +280,10 @@ def contact():
 def pricelist():
     return render_template('Pricelist.html')
 
+@app.route('/Project')
+def project():
+    return render_template('project.html')
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():

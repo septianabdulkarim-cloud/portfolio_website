@@ -33,5 +33,5 @@
 
 
 git add .
-git commit -m "Update index.html , login.html, register.html dan style.css" 
+git commit -m "Update index.html, pricelist.html, project.html , login.html, register.html dan style.css" 
 git push origin main
