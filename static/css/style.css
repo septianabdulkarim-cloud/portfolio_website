@@ -728,12 +728,25 @@ body {
 #PriceList .card-detail ul {
   margin: 0 0 20px 20px;
   padding: 0;
-  list-style-type: disc;
+  list-style-type: none;
   color: #444;
   font-size: 1rem;
   line-height: 1.6;
 }
+#PriceList .card-detail ul li {
+  position: relative;
+  padding-left: 28px; /* jarak untuk centang */
+  margin-bottom: 10px;
+}
 
+#PriceList .card-detail ul li::before {
+  content: "✓"; /* tanda centang */
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #222; /* netral, bukan hijau */
+  font-weight: bold;
+}
 /* Harga normal dan promo */
 #PriceList .card-detail p {
   font-size: 1rem;
